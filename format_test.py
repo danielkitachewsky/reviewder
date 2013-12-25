@@ -1,4 +1,5 @@
 #! /usr/bin/python
+# encoding: utf-8
 
 import format
 import os
@@ -52,9 +53,11 @@ class FormatTestCase(unittest.TestCase):
       self.assertEqual(u"foo", format._get_member(var, u"abc"))
       self.assertEqual(u"foo", format.render_text(text, a=var))
     self.assertEqual(u"", format.render_text(text, a=1))
-    dict_like = {u"abc": u"foo", u"def": u"bar"}
     text = u"{%a.abc%}{%a.def%}"
+    dict_like = {u"abc": u"foo", u"def": u"bar"}
     self.assertEqual(u"foobar", format.render_text(text, a=dict_like))
+    dict_like = {u"abc": u"гы-гы", u"def": 1}
+    self.assertEqual(u"гы-гы1", format.render_text(text, a=dict_like))
 
 
 class FormatFileTestCase(unittest.TestCase):

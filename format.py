@@ -90,7 +90,7 @@ def render_text(text, **kwargs):
         value = _get_member(kwargs[token.text], token.member)
       else:
         value = kwargs[token.text]
-    text = text.replace("{%" + token.label + "%}", value)
+      text = text.replace("{%" + token.label + "%}", value)
   return text
 
 

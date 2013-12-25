@@ -1,23 +1,51 @@
 #! /usr/bin/python
 
+from collections import defaultdict
 import os
 import re
 
 import review_types
 
-TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)%}")
+TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z0-9_]+)?%}")
 
 
 class RenderingError(review_types.Error):
   """Generic error raised during rendering of templates."""
 
 
+class Token(object):
+  """A token-replacement spec"""
+  def __init__(self, text, member):
+    self.text = text
+    self.member = member
+    # suppress initial dot coming from parsing
+    if self.member and self.member[:1] == ".":
+      self.member = self.member[1:]
+
+  @property
+  def label(self):
+    """Returns the string that represents this token."""
+    if not self.member:
+      return self.text
+    return "%s.%s" % (self.text, self.member)
+
+  def __eq__(self, other):
+    return self.text == other.text and self.member == other.member
+
+  def __hash__(self):
+    return hash(self.text) + hash(self.member)
+
+
 def collect_tokens(text):
-  """Returns the set of all tokens in given text."""
-  result = set()
+  """Returns a dict of all tokens in given text.
+
+  The dict is {text => [Token...]}.
+  """
+  result = defaultdict(set)
   search_result = TOKEN_RE.search(text)
   while search_result:
-    result.add(search_result.group(1))
+    token = Token(search_result.group(1), search_result.group(2))
+    result[search_result.group(1)].add(token)
     search_result = TOKEN_RE.search(text, search_result.end())
   return result
 
@@ -52,14 +80,41 @@ def render_text(text, **kwargs):
     - string containing the rendered text.
   """
   tokens_to_replace = collect_tokens(text)
-  missing_tokens = tokens_to_replace - set(kwargs)
+  missing_tokens = set(tokens_to_replace) - set(kwargs)
   if missing_tokens:
     raise RenderingError("some tokens not given a value: " +
                          ",".join(missing_tokens))
-  for token in tokens_to_replace:
-    text = text.replace("{%" + token + "%}", kwargs[token])
+  for token_set in tokens_to_replace.itervalues():
+    for token in token_set:
+      if token.member:
+        value = _get_member(kwargs[token.text], token.member)
+      else:
+        value = kwargs[token.text]
+    text = text.replace("{%" + token.label + "%}", value)
   return text
 
+
+def _get_member(var, name):
+  """Returns the member named name from var.
+
+  This can be a dictionary member or a class member, i.e. if var is a dict,
+  it returns var[name], and if var is a class, it returns var.name.
+  If member isn't present or wrong type, returns an empty string.
+  """
+  try:
+    return var[name]
+  except KeyError:
+    return ""
+  except TypeError:
+    pass
+  try:
+    return var.__getattribute__(name)
+  except KeyError:
+    return ""
+  except AttributeError:
+    return ""
+  # Shouldn't happen
+  raise RenderingError("Wrong type %s" % type(var))
 
 def _get_text_from_file(filename):
   """Return the text contents of the given filename.

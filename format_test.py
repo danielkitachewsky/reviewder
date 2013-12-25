@@ -24,14 +24,34 @@ class FormatTestCase(unittest.TestCase):
         ("{%1%}", set()),
         ("{toto%}", set()),
         ("{%toto}", set()),
+        ("{%toto.%}", set()),
         ("{%to-to%}", set()),
         ("{%toto%}", {"toto"}),
+        ("{%toto.abc%}", {"toto"}),
         ("{%_1%}", {"_1"}),
         ("{%toto%}{%tata%}", {"toto", "tata"}),
         ("{%toto%}{%toto%}", {"toto"}),
         ]
     for text, tokens in pairs:
-      self.assertEqual(format.collect_tokens(text), tokens)
+      self.assertEqual(set(format.collect_tokens(text)), tokens)
+
+  def test_token(self):
+    self.assertEqual("a", format.Token("a", "").label)
+    self.assertEqual("a", format.Token("a", None).label)
+    self.assertEqual("a.abc", format.Token("a", "abc").label)
+
+  def test_member(self):
+    class InClass(object):
+      abc = "foo"
+    class InInit(object):
+      def __init__(self):
+        self.abc = "foo"
+    dict_like = {"abc": "foo"}
+    text = "{%a.abc%}"
+    for var in [InClass(), InInit(), dict_like]:
+      self.assertEqual("foo", format._get_member(var, "abc"))
+      self.assertEqual("foo", format.render_text(text, a=var))
+    self.assertEqual("", format.render_text(text, a=1))
 
 
 class FormatFileTestCase(unittest.TestCase):

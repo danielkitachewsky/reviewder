@@ -1,24 +1,6 @@
-<head>
-  <meta http-equiv="content-type" content="text/html; charset='utf-8'" />
-  <title>Review #{%review.id_%}</title>
-  <style>
-    .hide {
-      display: none;
-    }
-  </style>
-  <script>
-    function toggleVisibility(review_id) {
-      var elt = document.getElementById("review" + review_id);
-      if (elt.style.display == "inline") {
-        elt.style.display = "none";
-      } else {
-        elt.style.display = "inline";
-      }
-    }
-  </script>
-</head>
-<body>
-  <p onclick="javascript:toggleVisibility({%review.id_%})">Review on {%review.subject%} by {%review.observer%}</p>
+  <p>
+    <img id="toggle{%review.id_%}" onclick="javascript:toggleVisibility({%review.id_%})" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQu8MhJ60E46yy3R0+3XVpIaidmeikootuKWJPbzvHL5XcrwyXdxwZ6GI9IE40WAQA7"/>
+  Review on {%review.subject%} by {%review.observer%}</p>
   <div id="review{%review.id_%}" class="hide">
     <p><h2>Strengths</h2></p>
     <p>{%review.strengths%}</p>
@@ -27,5 +9,3 @@
     <p><h2>Comments</h2></p>
     <p>{%review.comments%}</p>
   </div>
-</body>
-

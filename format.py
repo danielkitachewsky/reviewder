@@ -74,22 +74,18 @@ def render_text(text, **kwargs):
     - text is a string with optional {%tokens%}. Tokens must be valid Python
     identifiers.
     - **kwargs are the values to replace the tokens with. If a token isn't
-    given a value, a RenderingError is raised. Extra replacements don't have
-    any effect.
+    given a value, it's replaced by the empty string. Extra replacements don't
+    have any effect.
   Returns:
     - string containing the rendered text.
   """
   tokens_to_replace = collect_tokens(text)
-  missing_tokens = set(tokens_to_replace) - set(kwargs)
-  if missing_tokens:
-    raise RenderingError("some tokens not given a value: " +
-                         ",".join(missing_tokens))
   for token_set in tokens_to_replace.itervalues():
     for token in token_set:
       if token.member:
-        value = _get_member(kwargs[token.text], token.member)
+        value = _get_member(kwargs.get(token.text, {}), token.member)
       else:
-        value = kwargs[token.text]
+        value = kwargs.get(token.text, u"")
       text = text.replace(u"{%%%s%%}" % token.label, unicode(value))
   return text
 

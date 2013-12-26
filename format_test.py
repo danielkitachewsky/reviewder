@@ -13,10 +13,9 @@ class FormatTestCase(unittest.TestCase):
     self.assertEqual(u"totoatataa:b",
                      format.render_text(text,
                                         toto=u"a", titi=u"b", tutu=u"c"))
-    self.assertRaises(format.RenderingError,
-                      format.render_text,
-                      text,
-                      toto=u"a")
+    self.assertEqual(u"totoatataa:",
+                     format.render_text(text,
+                                        toto=u"a"))
   
   def test_tokens(self):
     pairs = [
@@ -74,10 +73,9 @@ class FormatFileTestCase(unittest.TestCase):
     self.assertEqual(u"totoatataa:b",
                      format.render_template(self.filename,
                                             toto=u"a", titi=u"b", tutu=u"c"))
-    self.assertRaises(format.RenderingError,
-                      format.render_template,
-                      self.filename,
-                      toto=u"a")
+    self.assertEqual(u"totoatataa:",
+                     format.render_template(self.filename,
+                                            toto=u"a"))
 
 def _make_random_filename():
   """Returns a filename with a random string.

@@ -6,32 +6,75 @@
     .hide {
       display: none;
     }
-    span {
-      font-size: 1.5em;
+    ul.reviewlist {
+      list-style-type: none;
+      border-spacing: 0;
+    }
+    li.row {
+      margin: 0;
+      padding: 1px;
+      border-top: 1px solid #ffffff;
+      border-bottom: 1px solid #111111;
+    }
+    .clickable {
+      cursor: pointer;
+    }
+    .clickable:hover {
+      color: blue;
     }
   </style>
   <script>
     function toggleVisibility(review_id) {
+      if (isVisible(review_id)) {
+        hide(review_id);
+      } else {
+        show(review_id);
+      }
+    }
+    function show(review_id) {
+      var elt = document.getElementById("review" + review_id);
+      var toggle = document.getElementById("toggle" + review_id);
+      var minus = document.getElementById("minus");
+      elt.style.display = "inline";
+      toggle.src = minus.src;
+    }
+    function hide(review_id) {
       var elt = document.getElementById("review" + review_id);
       var toggle = document.getElementById("toggle" + review_id);
       var plus = document.getElementById("plus");
-      var minus = document.getElementById("minus");
-      if (elt.style.display == "inline") {
-        // Hide
-        elt.style.display = "none";
-        toggle.src = plus.src;
-      } else {
-        // Show
-        elt.style.display = "inline";
-        toggle.src = minus.src;
+      elt.style.display = "none";
+      toggle.src = plus.src;
+    }
+    function isVisible(review_id) {
+      var elt = document.getElementById("review" + review_id);
+      return elt.style.display == "inline";
+    }
+    function showAll() {
+      var allReviewIds = {%all_review_ids%};
+      for (var i = 0; i < allReviewIds.length; ++i) {
+        show(allReviewIds[i]);
+      }
+    }
+    function hideAll() {
+      var allReviewIds = {%all_review_ids%};
+      for (var i = 0; i < allReviewIds.length; ++i) {
+        hide(allReviewIds[i]);
       }
     }
   </script>
 </head>
 <body>
-  <img id="plus" class="hide" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQu8MhJ60E46yy3R0+3XVpIaidmeikootuKWJPbzvHL5XcrwyXdxwZ6GI9IE40WAQA7" />
-  <img id="minus" class="hide" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQo8MhJ60E46yy3R0/3aeE1ZuWJimqKWBPInm47jzV9f+nj/0AfbHiIAAA7" />
   {%intro%}
-  {%body%}
+  <span class="clickable" onclick="javascript:showAll()">
+    <img id="plus" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQu8MhJ60E46yy3R0+3XVpIaidmeikootuKWJPbzvHL5XcrwyXdxwZ6GI9IE40WAQA7" />
+    Show all
+  </span>
+  <span class="clickable" onclick="javascript:hideAll()">
+    <img id="minus" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQo8MhJ60E46yy3R0/3aeE1ZuWJimqKWBPInm47jzV9f+nj/0AfbHiIAAA7" />
+    Hide all
+  </span>
+  <ul class="reviewlist">
+    {%body%}
+  </ul>
 </body>
 

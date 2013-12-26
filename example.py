@@ -6,6 +6,20 @@ import importer
 import review_types
 
 
+def _target_level(review):
+  """Returns a formatted level string for the target."""
+  if review.new_level:
+    return u"%s->%s" % (review.existing_level, review.new_level)
+  else:
+    return review.existing_level
+
+
+def _exam_score(review):
+  """Returns an HTML-formatted exam score, if applicable."""
+  if review.type_ == "Evaluation":
+    return u""
+  return u"<p>Scored %s on written exam." % review.exam_score
+
 def main():
   reviews = [
     importer.parse_html_review(open("brefka.html")),
@@ -13,7 +27,9 @@ def main():
     ]
 
   rendered_reviews = [
-    format.render_template("review.html", review=review)
+    format.render_template("review.html", review=review,
+                           target_level=_target_level(review),
+                           exam_score=_exam_score(review))
     for review in reviews]
   full_html = format.render_template(
     "reviews.html", body="".join(rendered_reviews), title="Reviews",

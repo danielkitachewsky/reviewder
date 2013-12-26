@@ -8,14 +8,10 @@ class Error(Exception):
 class Review(object):
   """Base class for all review types."""
   # TODO use DCI numbers instead of plain text
-  def __init__(self, id_, observer="", subject="",
-               strengths="", afi="", comments=""):
+  def __init__(self, id_, **kwargs):
     self.id_ = id_
-    self.observer = observer
-    self.subject = subject
-    self.strengths = strengths
-    self.afi = afi
-    self.comments = comments
+    for key, value in kwargs.iteritems():
+      self.__dict__[key] = value
 
   def __eq__(self, other):
     if not other:
@@ -24,23 +20,25 @@ class Review(object):
       return False
     if other.id_ != self.id_:
       return False
-    if other.observer != self.observer:
-      return False
-    if other.subject != self.subject:
-      return False
-    if other.strengths != self.strengths:
-      return False
-    if other.afi != self.afi:
-      return False
-    if other.comments != self.comments:
+    if other.__dict__ != self.__dict__:
       return False
     return True
 
   def __hash__(self):
-    return (hash(self.id_) +
-            hash(self.observer) +
-            hash(self.subject) +
-            hash(self.strengths) +
-            hash(self.afi) +
-            hash(self.comments))
+    result = 0
+    for key in sorted(self.__dict__):
+      result += hash(key) + hash(self.__dict__[key])
+    return result
+
+  def __repr__(self):
+    field_reprs = ["%s=%s" % (key, repr(value))
+                   for (key, value)
+                   in self.__dict__.iteritems()]
+    if field_reprs:
+      return "Review(%s, %s)" % (self.id_, ", ".join(field_reprs))
+    else:
+      return "Review(%s)" % self.id_
+
+  def __str__(self):
+    return repr(self)
 

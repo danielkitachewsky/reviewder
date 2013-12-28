@@ -4,6 +4,7 @@
 import format
 import importer
 import review_types
+import session
 
 
 def _target_level(review):
@@ -21,9 +22,11 @@ def _exam_score(review):
   return u"<p>Scored %s on written exam." % review.exam_score
 
 def main():
+  jcs = session.JudgeCenterSession()
   reviews = [
     importer.parse_html_review(open("brefka.html")),
     importer.parse_html_review(open("hiller.html")),
+    importer.parse_html_review(jcs.get_review_html(52056)),
     ]
 
   rendered_reviews = [

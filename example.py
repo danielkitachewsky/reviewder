@@ -3,7 +3,6 @@
 
 import format
 import importer
-import review_types
 import session
 
 
@@ -23,11 +22,14 @@ def _exam_score(review):
 
 def main():
   jcs = session.JudgeCenterSession()
-  reviews = [
-    importer.parse_html_review(open("brefka.html")),
-    importer.parse_html_review(open("hiller.html")),
-    importer.parse_html_review(jcs.get_review_html(52056)),
-    ]
+  jcs.add_filter_or("EnteredByDisplayName", "grossi")
+  jcs.add_filter("ReviewerDisplayName", "grossi")
+  reviews = [importer.parse_html_review(text)
+             for text in jcs.get_reviews_on_page()]
+  # reviews = [
+  #   importer.parse_html_review(open("brefka.html")),
+  #   importer.parse_html_review(open("hiller.html")),
+  #   ]
 
   rendered_reviews = [
     format.render_template("review.html", review=review,

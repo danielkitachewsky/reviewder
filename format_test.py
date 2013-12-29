@@ -26,11 +26,11 @@ class FormatTestCase(unittest.TestCase):
         (u"{%toto}", set()),
         (u"{%toto.%}", set()),
         (u"{%to-to%}", set()),
-        (u"{%toto%}", {u"toto"}),
-        (u"{%toto.abc%}", {u"toto"}),
-        (u"{%_1%}", {u"_1"}),
-        (u"{%toto%}{%tata%}", {u"toto", u"tata"}),
-        (u"{%toto%}{%toto%}", {u"toto"}),
+        (u"{%toto%}", set([u"toto"])),
+        (u"{%toto.abc%}", set([u"toto"])),
+        (u"{%_1%}", set([u"_1"])),
+        (u"{%toto%}{%tata%}", set([u"toto", u"tata"])),
+        (u"{%toto%}{%toto%}", set([u"toto"])),
         ]
     for text, tokens in pairs:
       self.assertEqual(set(format.collect_tokens(text)), tokens)

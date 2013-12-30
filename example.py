@@ -20,12 +20,23 @@ def _exam_score(review):
     return u""
   return u"<p>Scored %s on written exam." % review.exam_score
 
+
+def save_review(review):
+  import os
+  import review_io
+  if not os.isdir("data"):
+    os.makedirs("data")
+  review_io.save_review(review, "data")
+
+
 def main():
   jcs = session.JudgeCenterSession()
-  jcs.add_filter_or("EnteredByDisplayName", "grossi")
-  jcs.add_filter("ReviewerDisplayName", "grossi")
+  jcs.add_filter_or("SubjectDCINumber", "1206181211")
+  jcs.add_filter("ReviewerDCINumber", "1206181211")
   reviews = [importer.parse_html_review(text)
-             for text in jcs.get_reviews_on_page()]
+             for text in jcs.get_reviews()]
+  for review in reviews:
+    save_review(review)
   # reviews = [
   #   importer.parse_html_review(open("brefka.html")),
   #   importer.parse_html_review(open("hiller.html")),

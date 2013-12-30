@@ -62,6 +62,8 @@ def parse_fields(html):
     else:
       contents = contents_soup.text.strip()
     result[name] = contents
+  import sys
+  print >> sys.stderr, "%s on %s" % (result["Reviewer"], result["Subject"])
   return result
 
 

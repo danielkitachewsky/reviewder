@@ -25,6 +25,10 @@ ONLY_ME_FILTER_TEXT = "Entered By DCI Number is equal to {0}," \
     " or Subject DCI Number is equal to {0}".format(USERNAME)
 BTN_FINISH = "btnFinish"
 BTN_OR = "btnOr"
+DROPDOWN_LIST = "columnDropDownList"
+LINK_FIRST = "ucDataGridPagerLinksBottom.lkbFirst"
+LINK_NEXT = "ucDataGridPagerLinksBottom.lkbNext"
+TEXT_BOX = "userValueTextBox"
 
 # Javascript extractor tools
 POSTBACK_RE = re.compile("javascript:__doPostBack\('([^']*)','([^']*)'\)")
@@ -141,12 +145,7 @@ class JudgeCenterSession(object):
     if not filter_button:
       error("No button")
       return
-    js = POSTBACK_RE.search(filter_button['href'])
-    if js is None:
-      error("Wrong button", filter_button['href'])
-      return
-    fields = _get_fields(self.text)
-    _add_postback_args(fields, js.group(1), js.group(2))
+    fields = _extract_postback_args(self.text, filter_button['href'])
     self._post_form(fields)
 
   def get_review_html(self, review_id):
@@ -183,20 +182,38 @@ class JudgeCenterSession(object):
     self._add_filter_name(filter_name)
     self._input_value_or(value)
 
-  def get_reviews_on_page(self):
+  def get_reviews(self):
+    """Yields reviews corresponding to the current filters.
+
+    Navigates to next page as needed. Returns to page 1 after all reviews
+    have been consumed.
+    """
+    page = 1
+    for review in self._get_reviews_on_page():
+      yield review
+    next_page_link = _get_next_page_link(self.text)
+    while next_page_link:
+      fields = _extract_postback_args(self.text, next_page_link['href'])
+      self._post_form(fields)
+      page += 1
+      for review in self._get_reviews_on_page():
+        yield review
+      next_page_link = _get_next_page_link(self.text)
+    if page > 1:
+      first_page_link = _get_first_page_link(self.text)
+      if not first_page_link:
+        error("no first page link")
+      else:
+        fields = _extract_postback_args(self.text, first_page_link['href'])
+        self._post_form(fields)
+
+  def _get_reviews_on_page(self):
+    """Yields displayed reviews, without navigating to other pages."""
     soup = BeautifulSoup(self.text)
     for tr in soup.find_all('tr'):
       if tr.get('onclick') is None:
         continue
-      js = POSTBACK_RE.search(tr['onclick'])
-      if js is None:
-        error("Wrong tr %" % tr)
-        continue
-      if js.group(2) != 'Select':
-        error("Wrong tr onclick %" % tr)
-        continue
-      fields = _get_fields(self.text)
-      _add_postback_args(fields, js.group(1), js.group(2))
+      fields = _extract_postback_args(self.text, tr['onclick'])
       yield self._post_form_stateless(fields)
 
   def _add_filter_name(self, filter_name):
@@ -215,12 +232,8 @@ class JudgeCenterSession(object):
     if filter_dropdown is None:
       error("No filter dropdown")
       return
+    fields = _extract_postback_args(self.text, filter_dropdown['onchange'])
     fields[filter_dropdown['name']] = filter_name
-    js = TIMEOUT_POSTBACK_RE.search(filter_dropdown['onchange'])
-    if js is None:
-      error("Wrong dropdown", filter_dropdown['onchange'])
-      return
-    _add_postback_args(fields, js.group(1), js.group(2))
     self._post_form(fields)
 
   def _input_value(self, value):
@@ -324,6 +337,19 @@ def _add_review_home_select(fields):
   _add_postback_args(fields, "_dpmt$_mt$ts", "3")
 
 
+def _extract_postback_args(text, script):
+  """Return form fields corresponding to execution of given javascript."""
+  js = TIMEOUT_POSTBACK_RE.search(script)
+  if js is None:
+    js = POSTBACK_RE.search(script)
+    if js is None:
+      error("Wrong button", script)
+      return
+  fields = _get_fields(text)
+  _add_postback_args(fields, js.group(1), js.group(2))
+  return fields
+
+
 def _add_postback_args(fields, target, arg):
   """Fill the form fields with arguments from __doPostBack."""
   fields["__EVENTTARGET"] = target
@@ -341,18 +367,30 @@ def _get_me_filter(text):
 
 
 def _get_filter_dropdown(text):
-  soup = BeautifulSoup(text)
-  for select in soup.find_all('select'):
-    if 'columnDropDownList' in select['id']:
-      return select
-  return None
+  return _get_tag_by_field(text, 'select', 'id', DROPDOWN_LIST)
 
 
 def _get_user_value_box(text):
+  return _get_tag_by_field(text, 'input', 'id', TEXT_BOX)
+
+
+def _get_next_page_link(text):
+  return _get_tag_by_field(text, 'a', 'href', LINK_NEXT)
+
+
+def _get_first_page_link(text):
+  return _get_tag_by_field(text, 'a', 'href', LINK_FIRST)
+
+
+def _get_tag_by_field(text, tag_name, field, expr):
+  """Returns HTML tag in text if expr is in its field.
+
+  If not found, returns None.
+  """
   soup = BeautifulSoup(text)
-  for input_ in soup.find_all('input'):
-    if "userValueTextBox" in input_['id']:
-      return input_
+  for tag in soup.find_all(tag_name):
+    if expr in tag.get(field, ''):
+      return tag
   return None
 
 
@@ -361,7 +399,7 @@ def main():
   # jcs.add_filter("ReviewID", 53217)
   jcs.add_filter_or("EnteredByDisplayName", "grossi")
   jcs.add_filter("ReviewerDisplayName", "grossi")
-  iter_ = jcs.get_reviews_on_page()
+  iter_ = jcs.get_reviews()
   print BeautifulSoup(iter_.next()).prettify().encode('utf-8')
 
 if __name__ == "__main__":

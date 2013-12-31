@@ -58,7 +58,7 @@ def parse_fields(html):
       contents = contents_soup.prettify()[tag_length+4:-tag_length-5]
     elif name in ("Entered", "Observed"):
       date = parse(contents_soup.text.strip().split('"')[1])
-      contents = date.strftime("%Y-%m-%d %T")
+      contents = date.strftime("%Y-%m-%d")
     else:
       contents = contents_soup.text.strip()
     result[name] = contents
@@ -85,6 +85,7 @@ def make_review(field_dict):
     existing_level=field_dict["Existing Level"],
     new_level=field_dict.get("New Level", ""),
     exam_score=field_dict.get("Exam Score", ""),
+    entered_date=field_dict.get("Entered", ""),
     )
 
 

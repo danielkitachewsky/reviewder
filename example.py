@@ -64,13 +64,14 @@ def main():
     save_review(review)
 
   rendered_reviews = [
-    format.render_template("review.html", review=review,
+    format.render_template("templates/review.html",
+                           review=review,
                            target_level=_target_level(review),
                            bgcolor=_bgcolor(review),
                            exam_score=_exam_score(review))
     for review in reviews]
   full_html = format.render_template(
-    "reviews.html", body="".join(rendered_reviews), title="Reviews",
+    "templates/reviews.html", body="".join(rendered_reviews), title="Reviews",
     all_review_ids="[%s]" % ",".join(str(r.id_) for r in reviews))
   print full_html.encode("utf-8")
 

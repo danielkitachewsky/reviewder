@@ -48,10 +48,10 @@ def parse_fields(html):
   soup = BeautifulSoup(html)
   review_soup = soup.find(id="summary")
   result = {}
-  for b in review_soup.find_all("b"):
-    name = b.string.strip().strip(":")
-    contents_soup = b.parent
-    b.extract()
+  for b_tag in review_soup.find_all("b"):
+    name = b_tag.string.strip().strip(":")
+    contents_soup = b_tag.parent
+    b_tag.extract()
     if name in ("Strengths", "Areas for Improvement", "Comments"):
       contents_soup.attrs = {}
       tag_length = len(contents_soup.name)

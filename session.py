@@ -2,10 +2,11 @@
 
 from bs4 import BeautifulSoup
 import getpass
-import importer
 import requests
-from urllib import quote_plus
 import re
+
+import importer
+
 
 # Credentials
 USERNAME = "29870351"
@@ -85,8 +86,12 @@ def error(*args):
     print >> sys.stderr, args[-1]
 
 
-def getPassword():
-  global PASSWORD
+def get_password():
+  """Returns the user's password.
+
+  On first use the user is prompted for their password on the command line.
+  """
+  global PASSWORD  # pylint: disable=W0603
   if PASSWORD is None:
     PASSWORD = getpass.getpass()
   return PASSWORD
@@ -103,6 +108,7 @@ class JudgeCenterSession(object):
   def __init__(self):
     # TODO make text a getter/setter and update soup each time
     self.text = ""  # The current HTML content of the select reviews page.
+    self.session = None
     self._make_session()
     self._navigate_select_reviews()
     self._remove_only_me_filter()
@@ -217,10 +223,10 @@ class JudgeCenterSession(object):
   def _get_reviews_on_page(self):
     """Yields displayed reviews, without navigating to other pages."""
     soup = BeautifulSoup(self.text)
-    for tr in soup.find_all('tr'):
-      if tr.get('onclick') is None:
+    for tr_tag in soup.find_all('tr'):
+      if tr_tag.get('onclick') is None:
         continue
-      fields = _extract_postback_args(self.text, tr['onclick'])
+      fields = _extract_postback_args(self.text, tr_tag['onclick'])
       yield self._post_form_stateless(fields)
 
   def _add_filter_name(self, filter_name):
@@ -316,7 +322,7 @@ def _get_fields(text, multi_submit_name=""):
   for select in soup.findAll("select"):
     key = select.get('name', select.get('id'))
     if key is None:
-      error("Wrong input field", repr(input_))
+      error("Wrong input field", repr(select))
       continue
     for option in select.find_all('option'):
       if option.get('selected'):
@@ -334,7 +340,7 @@ def _get_fields(text, multi_submit_name=""):
 
 def _add_login_info(field_dico):
   field_dico['ctl00$phMainContent$DCINumberTextBox'] = USERNAME
-  field_dico['ctl00$phMainContent$PasswordTextBox'] = getPassword()
+  field_dico['ctl00$phMainContent$PasswordTextBox'] = get_password()
   field_dico['TimeZoneOffset'] = '-60'
 
 
@@ -346,14 +352,14 @@ def _add_review_home_select(fields):
 
 def _extract_postback_args(text, script):
   """Return form fields corresponding to execution of given javascript."""
-  js = TIMEOUT_POSTBACK_RE.search(script)
-  if js is None:
-    js = POSTBACK_RE.search(script)
-    if js is None:
+  javascript = TIMEOUT_POSTBACK_RE.search(script)
+  if javascript is None:
+    javascript = POSTBACK_RE.search(script)
+    if javascript is None:
       error("Wrong button", script)
       return
   fields = _get_fields(text)
-  _add_postback_args(fields, js.group(1), js.group(2))
+  _add_postback_args(fields, javascript.group(1), javascript.group(2))
   return fields
 
 
@@ -365,11 +371,11 @@ def _add_postback_args(fields, target, arg):
 
 def _get_me_filter(text):
   soup = BeautifulSoup(text)
-  for td in soup.find_all('td'):
-    if td.string is None:
+  for td_tag in soup.find_all('td'):
+    if td_tag.string is None:
       continue
-    if td.string.strip() == ONLY_ME_FILTER_TEXT:
-      return td
+    if td_tag.string.strip() == ONLY_ME_FILTER_TEXT:
+      return td_tag
   return None
 
 

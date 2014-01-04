@@ -8,6 +8,7 @@ from reviewder import format
 
 COLOR_YELLOW = "#ffff88"
 COLOR_GREEN = "#aaffaa"
+COLOR_PINK = "#ffaaaa"
 COLOR_WHITE = "#ffffff"
 
 
@@ -43,11 +44,17 @@ def _is_recommendation(review):
   return False
 
 
+def _is_self_review(review):
+  return review.observer == review.subject
+
+
 def _bgcolor(review):
   if review.new_level:  # Certification review
     return COLOR_YELLOW
   if _is_recommendation(review):
     return COLOR_GREEN
+  if _is_self_review(review):
+    return COLOR_PINK
   return COLOR_WHITE
 
 
@@ -67,11 +74,15 @@ def render_review(review):
 
 
 def _make_legend(reviews):
+  are_selfs = any(_is_self_review(review) for review in reviews)
   are_certs = any(review.new_level for review in reviews)
   are_recs = any(_is_recommendation(review) for review in reviews)
-  if not are_certs and not are_recs:
+  if not are_selfs and not are_certs and not are_recs:
     return ''
   result = '<br/>Legend:'
+  if are_selfs:
+    result += (' <span style="background-color: %s">'
+               'Self-Review</span>' % COLOR_PINK)
   if are_certs:
     result += (' <span style="background-color: %s">'
                'Certification</span>' % COLOR_YELLOW)

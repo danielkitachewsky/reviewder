@@ -207,8 +207,8 @@ class JudgeCenterSession(object):
     result = []
     for html_review in self._get_html_reviews():
       review = importer.parse_html_review(html_review)
-      print("Downloading review of %s on %s..." %
-            (review.observer, review.subject), file=sys.stderr)
+      print((u"Downloading review of %s on %s..." %
+            (review.observer, review.subject)).encode('utf-8'), file=sys.stderr)
       result.append(review)
     return result
 

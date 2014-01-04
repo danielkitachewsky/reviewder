@@ -1,10 +1,11 @@
 #! /usr/bin/python
 # encoding: utf-8
 
-import format
 import os
 import random
 import unittest
+
+from reviewder import format
 
 
 class FormatTestCase(unittest.TestCase):

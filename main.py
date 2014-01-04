@@ -1,8 +1,11 @@
 #! /usr/bin/python
 # encoding: utf-8
 
-import format
-import session
+import os
+
+from reviewder import format
+from reviewder import session
+from reviewder import review_io
 
 
 def _target_level(review):
@@ -43,8 +46,6 @@ def _exam_score(review):
 
 
 def save_review(review):
-  import os
-  import review_io
   if not os.path.isdir("data"):
     os.makedirs("data")
   review_io.save_review(review, "data")

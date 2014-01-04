@@ -3,7 +3,7 @@
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 
-import review_types
+from reviewder import review_types
 
 
 def parse_fields(html):

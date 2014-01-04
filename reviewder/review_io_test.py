@@ -6,7 +6,7 @@ import review_io
 import shutil
 import unittest
 
-import review_types
+from reviewder import review_types
 
 
 class ReviewIOTestCase(unittest.TestCase):

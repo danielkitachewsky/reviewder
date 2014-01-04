@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import review_types
+from reviewder import review_types
 
 
 class DownloadError(review_types.Error):

@@ -4,7 +4,7 @@ from collections import defaultdict
 import os
 import re
 
-import review_types
+from reviewder import review_types
 
 TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z0-9_]+)?%}")
 

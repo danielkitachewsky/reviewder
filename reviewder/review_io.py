@@ -3,7 +3,7 @@
 import json
 import os
 
-import review_types
+from reviewder import review_types
 
 
 def save_review(review, dir_):

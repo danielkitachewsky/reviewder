@@ -5,7 +5,7 @@ import getpass
 import requests
 import re
 
-import importer
+from reviewder import importer
 
 
 # Credentials

@@ -123,6 +123,7 @@ class JudgeCenterSession(object):
     # TODO make text a getter/setter and update soup each time
     self.text = ""  # The current HTML content of the select reviews page.
     self.session = None
+    self.page = 1
     self._make_session()
     self._navigate_select_reviews()
     self._remove_only_me_filter()
@@ -196,20 +197,25 @@ class JudgeCenterSession(object):
     self._input_value_or(value)
     return self
 
-  def get_reviews(self):
+  def get_reviews(self, review_limit=0):
     """Returns reviews corresponding to the current filters.
 
     Navigates to next page as needed. Returns to page 1 after all reviews
     have been consumed.
+    Args:
+      - review_limit is the maximum number of reviews to extract (no limit if 0)
     Returns:
       - a list of review_types.Review
     """
     result = []
-    for html_review in self._get_html_reviews():
+    for i, html_review in enumerate(self._get_html_reviews()):
       review = importer.parse_html_review(html_review)
       print((u"Downloading review of %s on %s..." %
             (review.observer, review.subject)).encode('utf-8'), file=sys.stderr)
       result.append(review)
+      if review_limit and i + 1 >= review_limit:
+        self._navigate_to_page_1()
+        break
     return result
 
   def _get_html_reviews(self):
@@ -220,24 +226,29 @@ class JudgeCenterSession(object):
     Yields:
       - HTML representation of a review
     """
-    page = 1
+    self.page = 1
     for review in self._get_reviews_on_page():
       yield review
     next_page_link = _get_next_page_link(self.text)
     while next_page_link:
       fields = _extract_postback_args(self.text, next_page_link['href'])
       self._post_form(fields)
-      page += 1
+      self.page += 1
       for review in self._get_reviews_on_page():
         yield review
       next_page_link = _get_next_page_link(self.text)
-    if page > 1:
-      first_page_link = _get_first_page_link(self.text)
-      if not first_page_link:
-        error("no first page link")
-      else:
-        fields = _extract_postback_args(self.text, first_page_link['href'])
-        self._post_form(fields)
+    self._navigate_to_page_1()
+
+  def _navigate_to_page_1(self):
+    if self.page == 1:
+      return
+    first_page_link = _get_first_page_link(self.text)
+    if not first_page_link:
+      error("No first page link")
+    else:
+      fields = _extract_postback_args(self.text, first_page_link['href'])
+      self.page = 1
+      self._post_form(fields)
 
   def _get_reviews_on_page(self):
     """Yields displayed reviews, without navigating to other pages."""
@@ -298,6 +309,7 @@ class JudgeCenterSession(object):
       - value is a textual value.
       - btn_name is the name of the button to submit with.
     """
+    self.page = 1
     value_box = _get_user_value_box(self.text)
     if value_box is None:
       error("No value box")

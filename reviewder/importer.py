@@ -1,7 +1,10 @@
 #! /usr/bin/python
 
+from __future__ import print_function
+
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
+import sys
 
 from reviewder import review_types
 
@@ -62,8 +65,7 @@ def parse_fields(html):
     else:
       contents = contents_soup.text.strip()
     result[name] = contents
-  import sys
-  print >> sys.stderr, "%s on %s" % (result["Reviewer"], result["Subject"])
+  print("%s on %s" % (result["Reviewer"], result["Subject"]), file=sys.stderr)
   return result
 
 

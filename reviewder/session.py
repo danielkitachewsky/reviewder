@@ -1,5 +1,7 @@
 #! /usr/bin/python
 
+from __future__ import print_function
+
 from bs4 import BeautifulSoup
 import getpass
 import requests
@@ -81,9 +83,9 @@ REVIEW_FILTERS = {
 def error(*args):
   import sys
   for arg in args[:-1]:
-    print >> sys.stderr, arg,
+    print(arg, end=' ', file=sys.stderr)
   if args:
-    print >> sys.stderr, args[-1]
+    print(args[-1], file=sys.stderr)
 
 
 def get_password():
@@ -413,7 +415,7 @@ def main():
   jcs.add_filter_or("EnteredByDisplayName", "grossi")
   jcs.add_filter("ReviewerDisplayName", "grossi")
   iter_ = jcs.get_reviews()
-  print BeautifulSoup(iter_.next()).prettify().encode('utf-8')
+  print(BeautifulSoup(iter_.next()).prettify().encode('utf-8'))
 
 if __name__ == "__main__":
   main()

@@ -87,7 +87,7 @@ def _make_legend(reviews):
     result += (' <span style="background-color: %s">'
                'Certification</span>' % COLOR_YELLOW)
   if are_recs:
-    result += (' <span style="background-color: {%reccolor%}">'
+    result += (' <span style="background-color: %s">'
                '(maybe) Recommendation</span>' % COLOR_GREEN)
   return result
 

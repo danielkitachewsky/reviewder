@@ -6,6 +6,11 @@ import os
 from reviewder import format
 
 
+COLOR_YELLOW = "#ffff88"
+COLOR_GREEN = "#aaffaa"
+COLOR_WHITE = "#ffffff"
+
+
 def _get_template(name):
   """Finds the template with given name relative to this module."""
   # HACK to fall back on our feet when deployed through py2exe
@@ -40,10 +45,10 @@ def _is_recommendation(review):
 
 def _bgcolor(review):
   if review.new_level:  # Certification review
-    return "#ffff88"  # Light yellow
+    return COLOR_YELLOW
   if _is_recommendation(review):
-    return "#aaffaa"  # Light green
-  return "#ffffff"  # White
+    return COLOR_GREEN
+  return COLOR_WHITE
 
 
 def _exam_score(review):
@@ -61,10 +66,26 @@ def render_review(review):
                                 exam_score=_exam_score(review))
 
 
+def _make_legend(reviews):
+  are_certs = any(review.new_level for review in reviews)
+  are_recs = any(_is_recommendation(review) for review in reviews)
+  if not are_certs and not are_recs:
+    return ''
+  result = '<br/>Legend:'
+  if are_certs:
+    result += (' <span style="background-color: %s">'
+               'Certification</span>' % COLOR_YELLOW)
+  if are_recs:
+    result += (' <span style="background-color: {%reccolor%}">'
+               '(maybe) Recommendation</span>' % COLOR_GREEN)
+  return result
+
+
 def render_reviews(reviews, title):
   rendered_reviews = [render_review(review) for review in reviews]
   full_html = format.render_template(
     _get_template("reviews.html"),
+    intro=_make_legend(reviews),
     body="".join(rendered_reviews),
     title=title,
     all_review_ids="[%s]" % ",".join(str(r.id_) for r in reviews))

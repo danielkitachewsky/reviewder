@@ -33,7 +33,7 @@ def _target_level(review):
 def _is_recommendation(review):
   """Guess if the review is a recommendation towards L3."""
   text = review.comments.lower() + review.strengths.lower()
-  rec_pos = text.find("recommendation")
+  rec_pos = text.find("recommend")
   while rec_pos >= 0:
     text_around = text[max(0, rec_pos - 15): min(rec_pos + 30, len(text) - 1)]
     if "level 3" in text_around \

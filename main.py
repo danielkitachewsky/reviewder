@@ -26,11 +26,14 @@ def main():
     print "This doesn't look like a DCI number. Aborting."
     sys.exit(1)
   reviews = get_review_bundle(dci_number)
-  filename = "%s_reviews.html" % dci_number
+  name = "%s_reviews.html" % dci_number
+  filename = os.path.join(os.path.expanduser("~/Documents"), name)
   with open(filename, "wb") as f:
     f.write(review_format.render_reviews(reviews,
                                          title=u"Reviews"))
   print "Reviews saved in %s" % filename
+  if sys.platform == 'win32':
+    raw_input("Press enter to close...")
 
 
 if __name__ == "__main__":

@@ -8,8 +8,12 @@ from reviewder import format
 
 def _get_template(name):
   """Finds the template with given name relative to this module."""
-  here = os.path.abspath(inspect.getfile(inspect.currentframe()))
-  return os.path.join(os.path.dirname(here), "templates", name)
+  # HACK to fall back on our feet when deployed through py2exe
+  here = os.path.dirname(os.path.abspath(__file__))
+  if "\\" in here:
+    while "library.zip" in here:
+      here = "\\".join(here.split("\\")[:-1])
+  return os.path.join(here, "templates", name)
 
 
 def _target_level(review):

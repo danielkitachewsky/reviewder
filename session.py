@@ -2,6 +2,7 @@
 
 from bs4 import BeautifulSoup
 import getpass
+import importer
 import requests
 from urllib import quote_plus
 import re
@@ -148,15 +149,6 @@ class JudgeCenterSession(object):
     fields = _extract_postback_args(self.text, filter_button['href'])
     self._post_form(fields)
 
-  def get_review_html(self, review_id):
-    """Download a review by its ID.
-
-    Due to Judge Center's (broken) permissions, this only works for reviews
-    by or on me."""
-    req = requests.Request("GET", REVIEW_URL, params={"id": str(review_id)})
-    resp = self.session.get(REVIEW_URL, params={"id": str(review_id)})
-    return resp.text.encode(resp.encoding)
-
   def add_filter(self, filter_name, value):
     """Adds a filter to the reviews select page and submits with "Finish".
 
@@ -168,6 +160,7 @@ class JudgeCenterSession(object):
     """
     self._add_filter_name(filter_name)
     self._input_value(value)
+    return self
 
   def add_filter_or(self, filter_name, value):
     """Adds a filter to the reviews select page and submits with "Or...".
@@ -181,12 +174,26 @@ class JudgeCenterSession(object):
     """
     self._add_filter_name(filter_name)
     self._input_value_or(value)
+    return self
 
   def get_reviews(self):
+    """Returns reviews corresponding to the current filters.
+
+    Navigates to next page as needed. Returns to page 1 after all reviews
+    have been consumed.
+    Returns:
+      - a list of review_types.Review
+    """
+    return [importer.parse_html_review(html_review)
+            for html_review in self._get_html_reviews()]
+
+  def _get_html_reviews(self):
     """Yields reviews corresponding to the current filters.
 
     Navigates to next page as needed. Returns to page 1 after all reviews
     have been consumed.
+    Yields:
+      - HTML representation of a review
     """
     page = 1
     for review in self._get_reviews_on_page():

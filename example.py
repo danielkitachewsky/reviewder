@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 import format
-import importer
 import session
 
 
@@ -53,20 +52,16 @@ def save_review(review):
 
 def get_review_bundle(dci_number):
   """Get all reviews by and on single person."""
-  jcs = session.JudgeCenterSession()
-  jcs.add_filter_or("SubjectDCINumber", str(dci_number))
-  jcs.add_filter("ReviewerDCINumber", str(dci_number))
-  return [importer.parse_html_review(text)
-          for text in jcs.get_reviews()]
+  reviews = (session.JudgeCenterSession()
+             .add_filter_or("SubjectDCINumber", str(dci_number))
+             .add_filter("ReviewerDCINumber", str(dci_number))
+             .get_reviews())
+  return reviews
 
 def main():
-  reviews = get_review_bundle("7208186288")  # Jess Dunks
+  reviews = get_review_bundle("9300051073")  # Aurelie Violette
   for review in reviews:
     save_review(review)
-  # reviews = [
-  #   importer.parse_html_review(open("brefka.html")),
-  #   importer.parse_html_review(open("hiller.html")),
-  #   ]
 
   rendered_reviews = [
     format.render_template("review.html", review=review,

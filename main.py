@@ -2,16 +2,11 @@
 # encoding: utf-8
 
 import os
+import re
+import sys
 
 from reviewder import session
 from reviewder import review_format
-from reviewder import review_io
-
-
-def save_review(review):
-  if not os.path.isdir("data"):
-    os.makedirs("data")
-  review_io.save_review(review, "data")
 
 
 def get_review_bundle(dci_number):
@@ -22,13 +17,20 @@ def get_review_bundle(dci_number):
              .get_reviews())
   return reviews
 
-def main():
-  reviews = get_review_bundle("9300051073")  # Aurelie Violette
-  for review in reviews:
-    save_review(review)
 
-  print review_format.render_reviews(reviews,
-                                     title=u"Reviews")
+def main():
+  print "Reviewder, the review downloader!"
+  dci_number = raw_input(
+    "Type a DCI number to get all reviews on and by that person\nDCI: ")
+  if not re.match("^[1-9][0-9]{3,9}$", dci_number):
+    print "This doesn't look like a DCI number. Aborting."
+    sys.exit(1)
+  reviews = get_review_bundle(dci_number)
+  filename = "%s_reviews.html" % dci_number
+  with open(filename, "wb") as f:
+    f.write(review_format.render_reviews(reviews,
+                                         title=u"Reviews"))
+  print "Reviews saved in %s" % filename
 
 
 if __name__ == "__main__":

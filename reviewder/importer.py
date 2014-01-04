@@ -1,7 +1,5 @@
 #! /usr/bin/python
 
-from __future__ import print_function
-
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 import sys
@@ -65,7 +63,6 @@ def parse_fields(html):
     else:
       contents = contents_soup.text.strip()
     result[name] = contents
-  print("%s on %s" % (result["Reviewer"], result["Subject"]), file=sys.stderr)
   return result
 
 

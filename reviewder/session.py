@@ -6,12 +6,13 @@ from bs4 import BeautifulSoup
 import getpass
 import requests
 import re
+import sys
 
 from reviewder import importer
 
 
 # Credentials
-USERNAME = "29870351"
+USERNAME = None
 PASSWORD = None
 
 # Cookies used by the Judge Center
@@ -26,7 +27,7 @@ REVIEW_URL = JUDGE_CENTER_URL + "reviews.aspx"
 # Constants for navigating around the Judge Center
 ONLY_ME_FILTER_TEXT = "Entered By DCI Number is equal to {0}," \
     " or Reviewer DCI Number is equal to {0}," \
-    " or Subject DCI Number is equal to {0}".format(USERNAME)
+    " or Subject DCI Number is equal to {0}"
 BTN_FINISH = "btnFinish"
 BTN_OR = "btnOr"
 DROPDOWN_LIST = "columnDropDownList"
@@ -95,8 +96,19 @@ def get_password():
   """
   global PASSWORD  # pylint: disable=W0603
   if PASSWORD is None:
-    PASSWORD = getpass.getpass()
+    PASSWORD = getpass.getpass("Judge Center Password: ")
   return PASSWORD
+
+
+def get_username():
+  """Returns the user's username, usually their DCI Number.
+
+  On first use the user is prompted for their username on the command line.
+  """
+  global USERNAME  # pylint: disable=W0603
+  if USERNAME is None:
+    USERNAME = raw_input("Your DCI Number: ")
+  return USERNAME
 
 
 class JudgeCenterSession(object):
@@ -192,8 +204,13 @@ class JudgeCenterSession(object):
     Returns:
       - a list of review_types.Review
     """
-    return [importer.parse_html_review(html_review)
-            for html_review in self._get_html_reviews()]
+    result = []
+    for html_review in self._get_html_reviews():
+      review = importer.parse_html_review(html_review)
+      print("Downloading review of %s on %s..." %
+            (review.observer, review.subject), file=sys.stderr)
+      result.append(review)
+    return result
 
   def _get_html_reviews(self):
     """Yields reviews corresponding to the current filters.
@@ -341,7 +358,7 @@ def _get_fields(text, multi_submit_name=""):
 
 
 def _add_login_info(field_dico):
-  field_dico['ctl00$phMainContent$DCINumberTextBox'] = USERNAME
+  field_dico['ctl00$phMainContent$DCINumberTextBox'] = get_username()
   field_dico['ctl00$phMainContent$PasswordTextBox'] = get_password()
   field_dico['TimeZoneOffset'] = '-60'
 
@@ -376,7 +393,7 @@ def _get_me_filter(text):
   for td_tag in soup.find_all('td'):
     if td_tag.string is None:
       continue
-    if td_tag.string.strip() == ONLY_ME_FILTER_TEXT:
+    if td_tag.string.strip() == ONLY_ME_FILTER_TEXT.format(get_username()):
       return td_tag
   return None
 
@@ -407,15 +424,3 @@ def _get_tag_by_field(text, tag_name, field, expr):
     if expr in tag.get(field, ''):
       return tag
   return None
-
-
-def main():
-  jcs = JudgeCenterSession()
-  # jcs.add_filter("ReviewID", 53217)
-  jcs.add_filter_or("EnteredByDisplayName", "grossi")
-  jcs.add_filter("ReviewerDisplayName", "grossi")
-  iter_ = jcs.get_reviews()
-  print(BeautifulSoup(iter_.next()).prettify().encode('utf-8'))
-
-if __name__ == "__main__":
-  main()

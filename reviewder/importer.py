@@ -70,16 +70,17 @@ def make_review(field_dict):
   """Returns a review_types.Review filled from a parsed dictionary."""
   return review_types.Review(
     id_=int(field_dict["ID"]),
-    observer=field_dict["Reviewer"],
+    # Renewal reviews don't have a Reviewer
+    observer=field_dict.get("Reviewer", field_dict["Entered By"]),
     subject=field_dict["Subject"],
     strengths=field_dict["Strengths"],
     afi=field_dict["Areas for Improvement"],
     comments=field_dict["Comments"],
     city=field_dict["City"],
-    comparison=field_dict["Comparison"],
+    comparison=field_dict.get("Comparison", ""),
     country=field_dict["Country"],
-    event_type=field_dict["Event Type"],
-    reviewer_level=field_dict["Reviewer Level"],
+    event_type=field_dict.get("Event Type", "N/A"),
+    reviewer_level=field_dict.get("Reviewer Level", ""),
     type_=field_dict["Type"],
     existing_level=field_dict["Existing Level"],
     new_level=field_dict.get("New Level", ""),

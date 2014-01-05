@@ -1,6 +1,5 @@
 
 
-import inspect
 import os
 
 from reviewder import format
@@ -9,6 +8,7 @@ from reviewder import format
 COLOR_YELLOW = "#ffff88"
 COLOR_GREEN = "#aaffaa"
 COLOR_PINK = "#ffaaaa"
+COLOR_BLUE = "#ccccff"
 COLOR_WHITE = "#ffffff"
 
 
@@ -22,9 +22,9 @@ def _get_template(name):
   return os.path.join(here, "templates", name)
 
 
-def _target_level(review):
+def _subject_level(review):
   """Returns a formatted level string for the target."""
-  if review.new_level:
+  if _is_certification(review):
     return u"%s->%s" % (review.existing_level, review.new_level)
   else:
     return review.existing_level
@@ -48,14 +48,41 @@ def _is_self_review(review):
   return review.observer == review.subject
 
 
+def _is_certification(review):
+  return bool(review.new_level)
+
+
+def _is_renewal(review):
+  return review.type_ == "Renewal"
+
+
+COLORINGS = [
+  (_is_certification, "Certification", COLOR_YELLOW),
+  (_is_recommendation, "(maybe) Recommendation", COLOR_GREEN),
+  (_is_renewal, "Renewal", COLOR_BLUE),
+  (_is_self_review, "Self-Review", COLOR_PINK),
+  ]
+
+
 def _bgcolor(review):
-  if review.new_level:  # Certification review
-    return COLOR_YELLOW
-  if _is_recommendation(review):
-    return COLOR_GREEN
-  if _is_self_review(review):
-    return COLOR_PINK
+  for criterion, _, color in COLORINGS:
+    if criterion(review):
+      return color
   return COLOR_WHITE
+
+
+def _make_legend(reviews):
+  legends_needed = []
+  for criterion, label, color in COLORINGS:
+    if any(criterion(review) for review in reviews):
+      legends_needed.append((label, color))
+  if not legends_needed:
+    return ''
+  result = '<br/>Legend:'
+  for label, color in legends_needed:
+    result += (' <span style="background-color: %s">%s</span>'
+               % (color, label))
+  return result
 
 
 def _exam_score(review):
@@ -65,31 +92,31 @@ def _exam_score(review):
   return u"<p>Scored %s on written exam." % review.exam_score
 
 
+def _reviewer_level(review):
+  """Returns the formatted level of the reviewer, if known."""
+  if review.type_ == "Renewal":
+    # The reviewer's level is not present in these, so we don't show anything
+    return ""
+  return "(%s)" % review.reviewer_level
+
+
+def _rated(review):
+  """Returns the HTML-formatted rating, if present."""
+  if review.type_ == "Renewal":
+    # These don't include a rating, so we don't show anything
+    return ""
+  return '<p>Rated "%s."' % review.comparison
+
+
 def render_review(review):
   return format.render_template(_get_template("review.html"),
                                 review=review,
-                                target_level=_target_level(review),
                                 bgcolor=_bgcolor(review),
-                                exam_score=_exam_score(review))
-
-
-def _make_legend(reviews):
-  are_selfs = any(_is_self_review(review) for review in reviews)
-  are_certs = any(review.new_level for review in reviews)
-  are_recs = any(_is_recommendation(review) for review in reviews)
-  if not are_selfs and not are_certs and not are_recs:
-    return ''
-  result = '<br/>Legend:'
-  if are_selfs:
-    result += (' <span style="background-color: %s">'
-               'Self-Review</span>' % COLOR_PINK)
-  if are_certs:
-    result += (' <span style="background-color: %s">'
-               'Certification</span>' % COLOR_YELLOW)
-  if are_recs:
-    result += (' <span style="background-color: %s">'
-               '(maybe) Recommendation</span>' % COLOR_GREEN)
-  return result
+                                reviewer_level=_reviewer_level(review),
+                                subject_level=_subject_level(review),
+                                exam_score=_exam_score(review),
+                                rated=_rated(review),
+                                )
 
 
 def render_reviews(reviews, title):

@@ -33,9 +33,9 @@ def get_recos():
   """Get recommendation reviews."""
   reviews = (session.JudgeCenterSession()
              .add_filter("SubjectLevelCd", "2")
-             .add_filter_or("Comments", "recommendation")
-             .add_filter("Strengths", "recommendation")
-             .get_reviews(100))
+             .add_filter_or("Comments", "recommend")
+             .add_filter("Strengths", "recommend")
+             .get_reviews())
   return reviews
 
 
@@ -47,8 +47,22 @@ def save_to_file(reviews, name):
   print "Reviews saved in %s" % filename
 
 
+def review_from_file(filename):
+  from reviewder import importer
+  return importer.parse_html_review(open(filename))
+
 def main():
   print "Reviewder, the review downloader!"
+  reviews = [
+    review_from_file("smith.html"),
+    review_from_file("hiller.html"),
+    review_from_file("brefka.html"),
+    review_from_file("dk.html"),
+    review_from_file("laquerre.html"),
+    ]
+  save_to_file(reviews, "blah.html")
+  sys.exit(0)
+  
   if len(sys.argv) > 1 and sys.argv[1] == "reco":
     reviews = get_recos()
     save_to_file(reviews, "recos.html")

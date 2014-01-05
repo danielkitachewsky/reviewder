@@ -143,10 +143,7 @@ class JudgeCenterSession(object):
                       data=fields)
 
   def _navigate_select_reviews(self):
-    """Navigates to the select reviews screen.
-
-    Gets around permission problems.
-    """
+    """Navigates to the select reviews screen."""
     review_home_req = self.session.get(REVIEW_URL)
     fields = _get_fields(review_home_req.text)
     _add_review_home_select(fields)

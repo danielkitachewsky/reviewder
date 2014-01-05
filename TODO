@@ -1,0 +1,4 @@
+
+- include example reviews (branch "examples") in a testing folder to have them as unit tests, but make sure they're not packaged in the public version
+- replace color-code of type by icons. Once it's done color-code review rating (red for below, green for outstanding)
+- place a visual marker for the one-year mark (also see if that makes sense for other time-related things, i.e. team leader reco, certs, supplemental activities)

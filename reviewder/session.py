@@ -34,6 +34,8 @@ DROPDOWN_LIST = "columnDropDownList"
 LINK_FIRST = "ucDataGridPagerLinksBottom.lkbFirst"
 LINK_NEXT = "ucDataGridPagerLinksBottom.lkbNext"
 TEXT_BOX = "userValueTextBox"
+MANY_RESULTS_RE = re.compile("Results ([0-9]+)-([0-9]+) of ([0-9]+).")
+FEW_RESULTS_RE = re.compile("([0-9]+) results?.")
 
 # Javascript extractor tools
 POSTBACK_RE = re.compile("javascript:__doPostBack\('([^']*)','([^']*)'\)")
@@ -224,6 +226,7 @@ class JudgeCenterSession(object):
       - HTML representation of a review
     """
     self.page = 1
+    error("%s results" % _get_result_count(self.text))
     for review in self._get_reviews_on_page():
       yield review
     next_page_link = _get_next_page_link(self.text)
@@ -421,6 +424,20 @@ def _get_next_page_link(text):
 
 def _get_first_page_link(text):
   return _get_tag_by_field(text, 'a', 'href', LINK_FIRST)
+
+
+def _get_result_count(text):
+  div_count = _get_tag_by_field(text, 'div', 'class', "results")
+  if not div_count:
+    error("No results tag found.")
+    return 0
+  match = MANY_RESULTS_RE.match(div_count.stripped_strings.next())
+  if match:
+    return int(match.group(3))
+  match = FEW_RESULTS_RE.match(div_count.stripped_strings.next())
+  if match:
+    return int(match.group(1))
+  return 0
 
 
 def _get_tag_by_field(text, tag_name, field, expr):

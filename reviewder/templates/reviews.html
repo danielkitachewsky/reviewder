@@ -22,6 +22,8 @@
     .clickable:hover {
       color: blue;
     }
+    /* Force vertical scrollbar even with little content to avoid centering jumps */
+    body { overflow-y: scroll; }
   </style>
   <script>
     function toggleVisibility(review_id) {

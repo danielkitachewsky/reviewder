@@ -9,6 +9,7 @@ import re
 import sys
 
 from reviewder import importer
+from reviewder import progress
 
 
 # Credentials
@@ -207,14 +208,19 @@ class JudgeCenterSession(object):
       - a list of review_types.Review
     """
     result = []
+    review_total = min(review_limit, _get_result_count(self.text))
+    messages = progress.Messages()
     for i, html_review in enumerate(self._get_html_reviews()):
       review = importer.parse_html_review(html_review)
-      print((u"Downloading review of %s on %s..." %
-            (review.observer, review.subject)).encode('utf-8'), file=sys.stderr)
+      messages.log(u"(%s/%s) Downloading review of %s on %s..." %
+                   (i + 1, review_total, review.observer,
+                    review.subject))
       result.append(review)
       if review_limit and i + 1 >= review_limit:
         self._navigate_to_page_1()
         break
+    messages.log("Downloaded %s reviews." % review_total)
+    messages.finish()
     return result
 
   def _get_html_reviews(self):

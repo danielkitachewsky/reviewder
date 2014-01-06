@@ -38,9 +38,10 @@ def _is_recommendation(review):
     text_around = text[max(0, rec_pos - 15): min(rec_pos + 30, len(text) - 1)]
     if "level 3" in text_around \
           or "l3" in text_around \
-          or "level three" in text_around:
+          or "level three" in text_around \
+          or "written" in text_around:
       return True
-    rec_pos = text.find("recommendation", rec_pos + 1)
+    rec_pos = text.find("recommend", rec_pos + 1)
   return False
 
 

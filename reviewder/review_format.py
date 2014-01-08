@@ -58,10 +58,10 @@ def _is_renewal(review):
 
 
 COLORINGS = [
-  (_is_certification, "Certification", COLOR_YELLOW),
-  (_is_recommendation, "(maybe) Recommendation", COLOR_GREEN),
-  (_is_renewal, "Renewal", COLOR_BLUE),
-  (_is_self_review, "Self-Review", COLOR_PINK),
+  (_is_certification, "Certification", "cert"),
+  (_is_recommendation, "(maybe) Recommendation", "rec"),
+  (_is_renewal, "Renewal", "renewal"),
+  (_is_self_review, "Self-Review", "self"),
   ]
 
 
@@ -69,7 +69,7 @@ def _bgcolor(review):
   for criterion, _, color in COLORINGS:
     if criterion(review):
       return color
-  return COLOR_WHITE
+  return ""
 
 
 def _make_legend(reviews):
@@ -81,7 +81,7 @@ def _make_legend(reviews):
     return ''
   result = '<br/>Legend:'
   for label, color in legends_needed:
-    result += (' <span style="background-color: %s">%s</span>'
+    result += (' <span class="%s">%s</span>'
                % (color, label))
   return result
 
@@ -112,7 +112,7 @@ def _rated(review):
 def render_review(review):
   return format.render_template(_get_template("review.html"),
                                 review=review,
-                                bgcolor=_bgcolor(review),
+                                class_=_bgcolor(review),
                                 reviewer_level=_reviewer_level(review),
                                 subject_level=_subject_level(review),
                                 exam_score=_exam_score(review),

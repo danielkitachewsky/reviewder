@@ -57,7 +57,7 @@ def _is_renewal(review):
   return review.type_ == "Renewal"
 
 
-COLORINGS = [
+REVIEW_TYPES = [
   (_is_certification, "Certification", "cert"),
   (_is_recommendation, "(maybe) Recommendation", "rec"),
   (_is_renewal, "Renewal", "renewal"),
@@ -65,16 +65,16 @@ COLORINGS = [
   ]
 
 
-def _bgcolor(review):
-  for criterion, _, color in COLORINGS:
+def _type_class(review):
+  for criterion, _, class_ in REVIEW_TYPES:
     if criterion(review):
-      return color
+      return class_
   return ""
 
 
 def _make_legend(reviews):
   legends_needed = []
-  for criterion, label, color in COLORINGS:
+  for criterion, label, color in REVIEW_TYPES:
     if any(criterion(review) for review in reviews):
       legends_needed.append((label, color))
   if not legends_needed:
@@ -112,7 +112,7 @@ def _rated(review):
 def render_review(review):
   return format.render_template(_get_template("review.html"),
                                 review=review,
-                                class_=_bgcolor(review),
+                                type_class=_type_class(review),
                                 reviewer_level=_reviewer_level(review),
                                 subject_level=_subject_level(review),
                                 exam_score=_exam_score(review),

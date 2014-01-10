@@ -1,5 +1,5 @@
 
-
+import base64
 import os
 
 from reviewder import format
@@ -12,14 +12,19 @@ COLOR_BLUE = "#ccccff"
 COLOR_WHITE = "#ffffff"
 
 
-def _get_template(name):
-  """Finds the template with given name relative to this module."""
+def _get_file_by_name(dir_, name):
+  """Finds the file with given name relative to this module."""
   # HACK to fall back on our feet when deployed through py2exe
   here = os.path.dirname(os.path.abspath(__file__))
   if "\\" in here:
     while "library.zip" in here:
       here = "\\".join(here.split("\\")[:-1])
-  return os.path.join(here, "templates", name)
+  return os.path.join(here, dir_, name)
+
+
+def _get_template(name):
+  """Finds the template with given name relative to this module."""
+  return _get_file_by_name("templates", name)
 
 
 def _subject_level(review):
@@ -53,37 +58,61 @@ def _is_certification(review):
   return bool(review.new_level)
 
 
+def _is_no_promotion(review):
+  return review.new_level == review.existing_level
+
+
+def _is_promotion(review):
+  return review.new_level and review.new_level > review.existing_level
+
+
+def _is_demotion(review):
+  return review.new_level and review.new_level < review.existing_level
+
+
 def _is_renewal(review):
   return review.type_ == "Renewal"
 
 
+def _get_icon(name):
+  filename = _get_file_by_name("icons", name)
+  filetype = name.split(".")[-1]
+  with open(filename, "rb") as f:
+    binary_data = f.read()
+  encoded_data = base64.b64encode(binary_data)
+  src = "data:image/%s;base64,%s" % (filetype, encoded_data)
+  return '<img class="noprint" src="%s">' % src
+
+
 REVIEW_TYPES = [
-  (_is_certification, "Certification", "cert"),
-  (_is_recommendation, "(maybe) Recommendation", "rec"),
-  (_is_renewal, "Renewal", "renewal"),
-  (_is_self_review, "Self-Review", "self"),
+  (_is_promotion, "Certification", _get_icon("chart_up_color.png")),
+  (_is_no_promotion, "Certification", ""),
+  (_is_demotion, "Certification", _get_icon("chart_down_color.png")),
+  (_is_recommendation, "(maybe) Recommendation", _get_icon("tick.png")),
+  (_is_renewal, "Renewal", _get_icon("cake.png")),
+  (_is_self_review, "Self-Review", _get_icon("dashboard.png")),
   ]
 
 
-def _type_class(review):
-  for criterion, _, class_ in REVIEW_TYPES:
-    if criterion(review):
-      return class_
-  return ""
+def _type_icon(review):
+  for criterion, _, icon_html in REVIEW_TYPES:
+    if criterion(review) and icon_html:
+      return icon_html
+  return '<span class="no-icon"></span>'
 
 
 def _make_legend(reviews):
   legends_needed = []
-  for criterion, label, color in REVIEW_TYPES:
+  for criterion, label, icon_html in REVIEW_TYPES:
     if any(criterion(review) for review in reviews):
-      legends_needed.append((label, color))
+      legends_needed.append((label, icon_html))
   if not legends_needed:
     return ''
-  result = '<br/>Legend:'
-  for label, color in legends_needed:
-    result += (' <span class="%s">%s</span>'
-               % (color, label))
-  return result
+  result = '<div class="noprint"><br>Legend:'
+  for label, icon_html in legends_needed:
+    result += ('<br>%s%s'
+               % (icon_html, label))
+  return result + "</div>"
 
 
 def _exam_score(review):
@@ -109,14 +138,31 @@ def _rated(review):
   return '<p>Rated "%s."' % review.comparison
 
 
+RATINGS = {
+  "Average": "",
+  "Above Average": "above",
+  "Outstanding": "outstanding",
+  "Below Average": "below",
+  }
+
+
+def _rated_class(review):
+  """Returns a CSS class according to the rating."""
+  if review.type_ == "Renewal":
+    # These don't include a rating, so we don't show anything
+    return ""
+  return RATINGS[review.comparison]
+
+
 def render_review(review):
   return format.render_template(_get_template("review.html"),
                                 review=review,
-                                type_class=_type_class(review),
+                                type_icon=_type_icon(review),
                                 reviewer_level=_reviewer_level(review),
                                 subject_level=_subject_level(review),
                                 exam_score=_exam_score(review),
                                 rated=_rated(review),
+                                rated_class=_rated_class(review),
                                 )
 
 

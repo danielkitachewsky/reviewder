@@ -81,7 +81,7 @@ def _get_icon(name):
     binary_data = f.read()
   encoded_data = base64.b64encode(binary_data)
   src = "data:image/%s;base64,%s" % (filetype, encoded_data)
-  return '<img class="noprint" src="%s">' % src
+  return '<img class="noprint icon" src="%s">' % src
 
 
 REVIEW_TYPES = [

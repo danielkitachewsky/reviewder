@@ -2,10 +2,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <title>{%title%}</title>
-  <style>
-    .hide {
-      display: none;
-    }
+  <style media="all">
     ul.reviewlist {
       list-style-type: none;
       border-spacing: 0;
@@ -39,6 +36,16 @@
     }
     /* Force vertical scrollbar even with little content to avoid centering jumps */
     body { overflow-y: scroll; }
+  </style>
+  <style media="screen">
+    .hide {
+      display: none;
+    }
+  </style>
+  <style media="print">
+    .noprint {
+      display: none;
+    }
   </style>
   <script>
     function toggleVisibility(review_id) {
@@ -81,11 +88,11 @@
   </script>
 </head>
 <body>
-  <span class="clickable" onclick="javascript:showAll()">
+  <span class="clickable noprint" onclick="javascript:showAll()">
     <img id="plus" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQu8MhJ60E46yy3R0+3XVpIaidmeikootuKWJPbzvHL5XcrwyXdxwZ6GI9IE40WAQA7" />
     Show all
   </span>
-  <span class="clickable" onclick="javascript:hideAll()">
+  <span class="clickable noprint" onclick="javascript:hideAll()">
     <img id="minus" src="data:image/gif;base64,R0lGODlhDwAPAOMIAAAAAJavxnSHmomgtmZ4iJq0zOLi4gICAv///////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAA8ALAAAAAAPAA8AAAQo8MhJ60E46yy3R0/3aeE1ZuWJimqKWBPInm47jzV9f+nj/0AfbHiIAAA7" />
     Hide all
   </span>

@@ -59,6 +59,8 @@ def main():
     review_from_file("brefka.html"),
     review_from_file("dk.html"),
     review_from_file("laquerre.html"),
+    review_from_file("demotion.html"),
+    review_from_file("outstanding_equal.html"),
     ]
   save_to_file(reviews, "blah.html")
   sys.exit(0)

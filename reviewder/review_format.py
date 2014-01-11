@@ -86,7 +86,7 @@ def _get_icon(name):
 
 REVIEW_TYPES = [
   (_is_promotion, "Certification", _get_icon("chart_up_color.png")),
-  (_is_no_promotion, "Certification", ""),
+  (_is_no_promotion, "Certification", _get_icon("chart_line.png")),
   (_is_demotion, "Certification", _get_icon("chart_down_color.png")),
   (_is_recommendation, "(maybe) Recommendation", _get_icon("tick.png")),
   (_is_renewal, "Renewal", _get_icon("cake.png")),

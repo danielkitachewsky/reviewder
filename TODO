@@ -4,4 +4,5 @@
 - make sure we can be cleanly interrupted by Ctrl+C, even in the middle of downloads
 - retrieve screen name of candidate by DCI number (use the people tab?). Use it for file name and title of page
 - handle DCI password error
-
+- filter by date
+- select all reviews on Frenchmen

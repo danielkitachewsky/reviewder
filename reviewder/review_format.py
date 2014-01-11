@@ -85,9 +85,9 @@ def _get_icon(name):
 
 
 REVIEW_TYPES = [
-  (_is_promotion, "Certification", _get_icon("chart_up_color.png")),
-  (_is_no_promotion, "Certification", _get_icon("chart_line.png")),
-  (_is_demotion, "Certification", _get_icon("chart_down_color.png")),
+  (_is_promotion, "Promotion", _get_icon("chart_up_color.png")),
+  (_is_no_promotion, "No promotion test", _get_icon("chart_line.png")),
+  (_is_demotion, "Demotion", _get_icon("chart_down_color.png")),
   (_is_recommendation, "(maybe) Recommendation", _get_icon("tick.png")),
   (_is_renewal, "Renewal", _get_icon("cake.png")),
   (_is_self_review, "Self-Review", _get_icon("dashboard.png")),
@@ -101,18 +101,54 @@ def _type_icon(review):
   return '<span class="no-icon"></span>'
 
 
-def _make_legend(reviews):
+def _collate(*elements):
+  """Returns HTML-formatted elements side-by-side.
+
+  Empty elements are skipped. Each element should be valid HTML.
+  """
+  elements_to_format = [e for e in elements if e != ""]
+  if not elements_to_format:
+    return ""
+  if len(elements_to_format) == 1:
+    return elements_to_format[0]
+  return ('<table><tbody class="legend"><tr><td>%s</td></tr></tbody></table>'
+          % "</td><td>".join(elements_to_format))
+
+
+def _make_type_legend(reviews):
   legends_needed = []
   for criterion, label, icon_html in REVIEW_TYPES:
     if any(criterion(review) for review in reviews):
       legends_needed.append((label, icon_html))
-  if not legends_needed:
-    return ''
-  result = '<div class="noprint"><br>Legend:'
-  for label, icon_html in legends_needed:
-    result += ('<br>%s%s'
-               % (icon_html, label))
-  return result + "</div>"
+  return "<br>".join('%s%s' % (icon_html, label)
+                     for label, icon_html in legends_needed)
+
+
+RATING_CLASSES = {
+  "Average": "",
+  "Above Average": "above",
+  "Outstanding": "outstanding",
+  "Below Average": "below",
+  }
+
+
+def _make_rating_legend(reviews):
+  ratings_needed = set()
+  for review in reviews:
+    if review.type_ == "Renewal":
+      continue
+    ratings_needed.add(review.comparison)
+  return "<br>".join('<span class="%s">%s</span>'
+                     % (RATING_CLASSES[rating], rating)
+                     for rating in ratings_needed)
+
+
+def _make_legend(reviews):
+  legend_contents = _collate(_make_type_legend(reviews),
+                             _make_rating_legend(reviews))
+  if not legend_contents:
+    return ""
+  return '<div class="noprint">Legend:%s</div>' % legend_contents
 
 
 def _exam_score(review):
@@ -138,20 +174,12 @@ def _rated(review):
   return '<p>Rated "%s."' % review.comparison
 
 
-RATINGS = {
-  "Average": "",
-  "Above Average": "above",
-  "Outstanding": "outstanding",
-  "Below Average": "below",
-  }
-
-
 def _rated_class(review):
   """Returns a CSS class according to the rating."""
   if review.type_ == "Renewal":
     # These don't include a rating, so we don't show anything
     return ""
-  return RATINGS[review.comparison]
+  return RATING_CLASSES[review.comparison]
 
 
 def render_review(review):

@@ -65,19 +65,19 @@
       var elt = document.getElementById("review" + review_id);
       var toggle = document.getElementById("toggle" + review_id);
       var minus = document.getElementById("minus");
-      elt.style.display = "inline";
+      elt.classList.remove("hide");
       toggle.src = minus.src;
     }
     function hide(review_id) {
       var elt = document.getElementById("review" + review_id);
       var toggle = document.getElementById("toggle" + review_id);
       var plus = document.getElementById("plus");
-      elt.style.display = "none";
+      elt.classList.add("hide");
       toggle.src = plus.src;
     }
     function isVisible(review_id) {
       var elt = document.getElementById("review" + review_id);
-      return elt.style.display == "inline";
+      return !elt.classList.contains("hide");
     }
     function showAll() {
       var allReviewIds = {%all_review_ids%};

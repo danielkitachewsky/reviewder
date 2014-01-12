@@ -91,3 +91,34 @@ def make_review(field_dict):
 
 def parse_html_review(html):
   return make_review(parse_fields(html))
+
+
+def main():
+  # Here so that it can't be accessed from public-facing Windows build
+  import os
+  from reviewder import review_format
+  def save_to_file(reviews, name):
+    filename = os.path.join(os.path.expanduser("~/Documents"), name)
+    with open(filename, "wb") as f:
+      f.write(review_format.render_reviews(reviews,
+                                           title=u"Reviews"))
+    print "Reviews saved in %s" % filename
+
+
+  def review_from_file(filename):
+    return parse_html_review(open(filename))
+
+  reviews = [
+    review_from_file("smith.html"),
+    review_from_file("hiller.html"),
+    review_from_file("brefka.html"),
+    review_from_file("dk.html"),
+    review_from_file("laquerre.html"),
+    review_from_file("demotion.html"),
+    review_from_file("outstanding_equal.html"),
+    ]
+  save_to_file(reviews, "blah.html")
+
+
+if __name__ == "__main__":
+  main()

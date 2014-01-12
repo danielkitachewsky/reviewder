@@ -53,18 +53,6 @@ def review_from_file(filename):
 
 def main():
   print "Reviewder, the review downloader!"
-  reviews = [
-    review_from_file("smith.html"),
-    review_from_file("hiller.html"),
-    review_from_file("brefka.html"),
-    review_from_file("dk.html"),
-    review_from_file("laquerre.html"),
-    review_from_file("demotion.html"),
-    review_from_file("outstanding_equal.html"),
-    ]
-  save_to_file(reviews, "blah.html")
-  sys.exit(0)
-  
   if len(sys.argv) > 1 and sys.argv[1] == "reco":
     reviews = get_recos()
     save_to_file(reviews, "recos.html")

@@ -208,7 +208,10 @@ class JudgeCenterSession(object):
       - a list of review_types.Review
     """
     result = []
-    review_total = min(review_limit, _get_result_count(self.text))
+    if review_limit:
+      review_total = min(review_limit, _get_result_count(self.text))
+    else:
+      review_total = _get_result_count(self.text)
     messages = progress.Messages()
     for i, html_review in enumerate(self._get_html_reviews()):
       review = importer.parse_html_review(html_review)

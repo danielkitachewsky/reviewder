@@ -7,5 +7,13 @@ setup(console=["main.py"],
         "reviewder/templates/review.html",
         "reviewder/templates/reviews.html",
         ]),
+                  ("icons", [
+        "reviewder/icons/cake.png",
+        "reviewder/icons/chart_down_color.png",
+        "reviewder/icons/chart_line.png",
+        "reviewder/icons/chart_up_color.png",
+        "reviewder/icons/dashboard.png",
+        "reviewder/icons/tick.png",
+        ]),
                   ("", ["README.txt"]),
                   ])

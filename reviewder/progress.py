@@ -34,7 +34,7 @@ class _Messages(object):
 
 class _SimpleMessages(_Messages):
   def log(self, msg):
-    print(msg.encode('utf-8'), file=sys.stderr)
+    print(msg.encode(sys.stderr.encoding, 'replace'), file=sys.stderr)
 
   def finish(self, newline=True):
     # Since we always print a newline, there's nothing to do to finalize
@@ -53,7 +53,8 @@ class _ProgressMessages(_Messages):
     print(' ' * self.last_message_length, end='', file=sys.stderr)
     print('\b' * self.last_message_length, end='', file=sys.stderr)
     self.last_message_length = len(msg)
-    print(msg.encode('utf-8'), end='', file=sys.stderr)
+    print(msg.encode(sys.stderr.encoding, 'replace'),
+          end='', file=sys.stderr)
 
   def finish(self, newline=True):
     if newline:

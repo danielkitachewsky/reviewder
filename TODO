@@ -8,3 +8,4 @@
 - test in different time zone and see if downloaded dates aren't corrupted
 - fix appearance of icons on Retina displays (they're much too small)
 - bug in progress bar when the text doesn't fit in the terminal's width (doesn't erase everything)
+- test with reviews by Emeritus

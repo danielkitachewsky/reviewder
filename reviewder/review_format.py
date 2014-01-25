@@ -36,16 +36,26 @@ def _subject_level(review):
 
 
 def _is_recommendation(review):
-  """Guess if the review is a recommendation towards L3."""
+  """Guess if the review is a recommendation.
+
+  Valid recommendations are:
+  - L3 recommendation
+  - GP TL recommendation by a L4+
+  """
+  if review.reviewer_level not in "345":
+    return False
   text = review.comments.lower() + review.strengths.lower()
   rec_pos = text.find("recommend")
   while rec_pos >= 0:
-    text_around = text[max(0, rec_pos - 15): min(rec_pos + 30, len(text) - 1)]
+    text_around = text[max(0, rec_pos - 45): min(rec_pos + 60, len(text) - 1)]
     if "level 3" in text_around \
           or "l3" in text_around \
           or "level three" in text_around \
           or "written" in text_around:
       return True
+    if "tl" in text_around \
+          or "team leader" in text_around:
+      return review.reviewer_level in "45"
     rec_pos = text.find("recommend", rec_pos + 1)
   return False
 

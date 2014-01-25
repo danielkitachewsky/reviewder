@@ -130,12 +130,12 @@ def _make_type_legends(reviews):
           for label, icon_html in legends_needed]
 
 
-RATING_CLASSES = {
-  "Average": "",
-  "Above Average": "above",
-  "Outstanding": "outstanding",
-  "Below Average": "below",
-  }
+RATING_CLASSES = [
+  ("Outstanding", "outstanding"),
+  ("Above Average", "above"),
+  ("Average", ""),
+  ("Below Average", "below"),
+  ]
 
 
 def _make_rating_legends(reviews):
@@ -144,9 +144,12 @@ def _make_rating_legends(reviews):
     if review.type_ == "Renewal":
       continue
     ratings_needed.add(review.comparison)
-  return ['<span class="%s">%s</span>'
-          % (RATING_CLASSES[rating], rating)
-          for rating in ratings_needed]
+  result = []
+  for rating, class_ in RATING_CLASSES:
+    if rating in ratings_needed:
+      result.append('<span class="%s">%s</span>' %
+                    (class_, rating))
+  return result
 
 
 def _make_legend(reviews):
@@ -185,7 +188,10 @@ def _rated_class(review):
   if review.type_ == "Renewal":
     # These don't include a rating, so we don't show anything
     return ""
-  return RATING_CLASSES[review.comparison]
+  for rating, class_ in RATING_CLASSES:
+    if review.comparison == rating:
+      return class_
+  return ""
 
 
 def render_review(review):

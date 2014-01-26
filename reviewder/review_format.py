@@ -91,8 +91,10 @@ def _get_icon(name):
   with open(filename, "rb") as f:
     binary_data = f.read()
   encoded_data = base64.b64encode(binary_data)
-  src = "data:image/%s;base64,%s" % (filetype, encoded_data)
-  return '<img class="noprint icon" src="%s">' % src
+  style = ("background: url(data:image/%s;base64,%s) no-repeat;"
+           " width: 16px; height: 16px; float: left;"
+           % (filetype, encoded_data))
+  return '<div class="noprint icon" style="%s"></div>' % style
 
 
 REVIEW_TYPES = [
@@ -109,7 +111,8 @@ def _type_icon(review):
   for criterion, _, icon_html in REVIEW_TYPES:
     if criterion(review) and icon_html:
       return icon_html
-  return '<span class="no-icon"></span>'
+  style = " width: 16px; height: 16px; float: left;"
+  return '<div class="noprint icon" style="%s"></div>' % style
 
 
 def _collate(*element_list):

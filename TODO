@@ -1,10 +1,9 @@
 
-- place a visual marker for the one-year mark (also see if that makes sense for other time-related things, i.e. team leader reco, certs, supplemental activities)
 - make sure we can be cleanly interrupted by Ctrl+C, even in the middle of downloads
 - retrieve screen name of candidate by DCI number (use the people tab?). Use it for file name and title of page
 - handle DCI password error
 - filter by date
-- select all reviews on Frenchmen
+- select all reviews on Frenchmen => a good proxy could be to use events in France and excluding Grand Prix events. Reviews on Grand Prix can be filtered separately, although it's still somewhat of a pain to determine who exactly was there.
 - test in different time zone and see if downloaded dates aren't corrupted
 - fix appearance of icons on Retina displays (they're much too small)
 - bug in progress bar when the text doesn't fit in the terminal's width (doesn't erase everything)

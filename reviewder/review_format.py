@@ -1,6 +1,7 @@
 
 import base64
 import os
+import time
 
 from reviewder import format
 
@@ -204,7 +205,16 @@ def _rated_class(review):
   return ""
 
 
-def render_review(review):
+def _is_in_last_12_months(review):
+  """Returns True iff review has been entered in last 12 months."""
+  today_iso = time.strftime("%Y%m%d")
+  year = int(today_iso[:4])
+  last_year_iso = "%s%s" % (year - 1, today_iso[4:])
+  review_date = review.entered_date.replace("-", "")
+  return review_date >= last_year_iso
+
+
+def render_review(review, row_class=""):
   return format.render_template(_get_template("review.html"),
                                 review=review,
                                 type_icon=_type_icon(review),
@@ -213,15 +223,30 @@ def render_review(review):
                                 exam_score=_exam_score(review),
                                 rated=_rated(review),
                                 rated_class=_rated_class(review),
+                                row_class=row_class,
                                 )
 
 
 def render_reviews(reviews, title):
+  # Shortcut
+  if not reviews:
+    return ""
+  # Sort by date
   reviews_by_date = sorted(reviews,
                            key=lambda r: r.entered_date,
                            reverse=True)
-  rendered_reviews = [render_review(review) for review in reviews_by_date]
-  # TODO: add separation at one-year mark
+  # Last review in the last 12 months marks end
+  last_review_this_year = None
+  for review in reviews_by_date:
+    if _is_in_last_12_months(review):
+      last_review_this_year = review
+  rendered_reviews = []
+  for review in reviews_by_date:
+    if review == last_review_this_year:
+      row_class = "separator"
+    else:
+      row_class = ""
+    rendered_reviews.append(render_review(review, row_class))
   full_html = format.render_template(
     _get_template("reviews.html"),
     intro=_make_legend(reviews),

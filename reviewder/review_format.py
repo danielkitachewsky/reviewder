@@ -217,11 +217,15 @@ def render_review(review):
 
 
 def render_reviews(reviews, title):
-  rendered_reviews = [render_review(review) for review in reviews]
+  reviews_by_date = sorted(reviews,
+                           key=lambda r: r.entered_date,
+                           reverse=True)
+  rendered_reviews = [render_review(review) for review in reviews_by_date]
+  # TODO: add separation at one-year mark
   full_html = format.render_template(
     _get_template("reviews.html"),
     intro=_make_legend(reviews),
     body="".join(rendered_reviews),
     title=title,
-    all_review_ids="[%s]" % ",".join(str(r.id_) for r in reviews))
+    all_review_ids="[%s]" % ",".join(str(r.id_) for r in reviews_by_date))
   return full_html.encode("utf-8")

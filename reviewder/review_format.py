@@ -45,12 +45,15 @@ def _is_recommendation(review):
   """
   if review.reviewer_level not in "345":
     return False
-  text = review.comments.lower() + review.strengths.lower()
+  text = (review.comments.lower() +
+          review.strengths.lower() +
+          review.city.lower())
   rec_pos = text.find("recommend")
   while rec_pos >= 0:
     text_around = text[max(0, rec_pos - 45): min(rec_pos + 60, len(text) - 1)]
     if "level 3" in text_around \
           or "l3" in text_around \
+          or "lv3" in text_around \
           or "level three" in text_around \
           or "written" in text_around:
       return True

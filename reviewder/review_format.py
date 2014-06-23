@@ -57,9 +57,10 @@ def _is_recommendation(review):
           or "level three" in text_around \
           or "written" in text_around:
       return True
-    if "tl" in text_around \
-          or "team leader" in text_around:
-      return review.reviewer_level in "45"
+    if ("tl" in text_around \
+          or "team leader" in text_around) \
+        and review.reviewer_level in "45":
+      return True
     rec_pos = text.find("recommend", rec_pos + 1)
   return False
 

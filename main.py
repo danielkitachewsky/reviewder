@@ -9,6 +9,10 @@ from reviewder import session
 from reviewder import review_format
 
 
+class ReviewderError(Exception):
+  """Error raised during use of Reviewder."""
+
+
 def get_review_bundle(dci_number, limit=0):
   """Get all reviews by and on single person."""
   reviews = (session.JudgeCenterSession()
@@ -18,13 +22,43 @@ def get_review_bundle(dci_number, limit=0):
   return reviews
 
 
-def prompt_review_bundle(limit=0):
+def get_on_review_bundle(dci_number, limit=0):
+  """Get all reviews on a single person."""
+  reviews = (session.JudgeCenterSession()
+             .add_filter("SubjectDCINumber", str(dci_number))
+             .get_reviews(limit))
+  return reviews
+
+
+def get_by_review_bundle(dci_number, limit=0):
+  """Get all reviews by a single person."""
+  reviews = (session.JudgeCenterSession()
+             .add_filter("ReviewerDCINumber", str(dci_number))
+             .get_reviews(limit))
+  return reviews
+
+
+def prompt_review_bundle(limit=0, mode="all"):
+  """Prompt for a DCI number and get a review bundle for that person.
+
+  mode can be:
+  - "all": gets reviews on and by that person.
+  - "on": gets reviews on that person.
+  - "by": gets reviews by that person.
+  """
   dci_number = raw_input(
     "Type a DCI number to get all reviews on and by that person\nDCI: ")
   if not re.match("^[1-9][0-9]{3,9}$", dci_number):
     print "This doesn't look like a DCI number. Aborting."
     sys.exit(1)
-  reviews = get_review_bundle(dci_number, limit)
+  if mode == "all":
+    reviews = get_review_bundle(dci_number, limit)
+  elif mode == "on":
+    reviews = get_on_review_bundle(dci_number, limit)
+  elif mode == "by":
+    reviews = get_by_review_bundle(dci_number, limit)
+  else:
+    raise ReviewderError("Invalid mode %s" % mode)
   name = "%s_reviews.html" % dci_number
   save_to_file(reviews, name)
 
@@ -57,7 +91,11 @@ def main():
     reviews = get_recos()
     save_to_file(reviews, "recos.html")
   elif len(sys.argv) > 1:
-    prompt_review_bundle(int(sys.argv[1]))
+    try:
+      limit = int(sys.argv[1])
+      prompt_review_bundle(limit=limit)
+    except ValueError:
+      prompt_review_bundle(mode=sys.argv[1])
   else:
     prompt_review_bundle()
   if sys.platform == 'win32':

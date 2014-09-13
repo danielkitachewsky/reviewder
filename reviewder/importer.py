@@ -95,6 +95,7 @@ def parse_html_review(html):
 
 def main():
   # Here so that it can't be accessed from public-facing Windows build
+  import glob
   import os
   from reviewder import review_format
   def save_to_file(reviews, name):
@@ -108,15 +109,8 @@ def main():
   def review_from_file(filename):
     return parse_html_review(open(filename))
 
-  reviews = [
-    review_from_file("smith.html"),
-    review_from_file("hiller.html"),
-    review_from_file("brefka.html"),
-    review_from_file("dk.html"),
-    review_from_file("laquerre.html"),
-    review_from_file("demotion.html"),
-    review_from_file("outstanding_equal.html"),
-    ]
+  reviews = [review_from_file(filename)
+             for filename in glob.glob("reviewder/testdata/*.html")]
   save_to_file(reviews, "blah.html")
 
 

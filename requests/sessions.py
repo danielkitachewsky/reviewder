@@ -379,6 +379,10 @@ class Session(SessionRedirectMixin):
             'proxies': proxies,
             'allow_redirects': allow_redirects,
         }
+        print prep
+        import pprint
+        pprint.pprint(prep.headers)
+        pprint.pprint(send_kwargs)
         resp = self.send(prep, **send_kwargs)
 
         return resp

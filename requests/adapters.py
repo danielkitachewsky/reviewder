@@ -311,6 +311,10 @@ class HTTPAdapter(BaseAdapter):
 
         try:
             if not chunked:
+                print self, url
+                import pprint
+                pprint.pprint(request.headers)
+                pprint.pprint(request.body)
                 resp = conn.urlopen(
                     method=request.method,
                     url=url,
@@ -323,6 +327,7 @@ class HTTPAdapter(BaseAdapter):
                     retries=self.max_retries,
                     timeout=timeout
                 )
+                pprint.pprint(resp.getheaders())
 
             # Send the request.
             else:

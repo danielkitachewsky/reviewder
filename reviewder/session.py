@@ -22,7 +22,7 @@ AUTH_COOKIE = "JudgeCenter.AspxAuth"
 
 # URLs
 JUDGE_CENTER_URL = "http://judge.wizards.com/"
-LOGIN_URL = JUDGE_CENTER_URL + "login.aspx"
+LOGIN_URL = JUDGE_CENTER_URL
 REVIEW_URL = JUDGE_CENTER_URL + "reviews.aspx"
 
 # Constants for navigating around the Judge Center
@@ -113,6 +113,15 @@ def get_username():
     USERNAME = raw_input("Your DCI Number: ")
   return USERNAME
 
+import pprint
+
+def save_to_file(name, text):
+  import os
+  filename = os.path.join(os.path.expanduser("~/tmp"), name)
+  with open(filename, "wb") as f:
+    f.write(text)
+    f.write("\n")
+
 
 class JudgeCenterSession(object):
   """Handle a session with the Judge Center and make requests.
@@ -138,19 +147,30 @@ class JudgeCenterSession(object):
     """
     self.session = requests.Session()
     session_req = self.session.get(LOGIN_URL,
-                                   params={"ReturnUrl": "/home.aspx"})
+                                   headers=self._get_headers())
     fields = _get_fields(session_req.text)
+    save_to_file("reviewder_before_login.html", session_req.text.encode("utf-8"))
     _add_login_info(fields)
-    self.session.post(LOGIN_URL,
-                      params={"ReturnUrl": "/home.aspx"},
-                      data=fields)
+    if "txtAutocomplete" in fields:
+      del fields["txtAutocomplete"]
+    pprint.pprint(self.session.cookies.items())
+    pprint.pprint(fields)
+    after = self.session.post(LOGIN_URL + "login.aspx",
+                              params={"ReturnUrl": "/home.aspx"},
+                              headers=self._get_headers(),
+                              data=fields)
+    pprint.pprint(self.session.cookies.items())
+    save_to_file("reviewder_after_login.html", after.text.encode("utf-8"))
 
   def _navigate_select_reviews(self):
     """Navigates to the select reviews screen."""
-    review_home_req = self.session.get(REVIEW_URL)
+    review_home_req = self.session.get(REVIEW_URL,
+                                       headers=self._get_headers())
+    save_to_file("reviewder_reviews.html", review_home_req.text.encode("utf-8"))
     fields = _get_fields(review_home_req.text)
     _add_review_home_select(fields)
     self._post_form(fields)
+    save_to_file("reviewder_reviews_posted.html", self.text)
 
   def _remove_only_me_filter(self):
     """Removes the review filter that restricts to viewing only own reviews.
@@ -259,6 +279,15 @@ class JudgeCenterSession(object):
       self.page = 1
       self._post_form(fields)
 
+  def _get_headers(self):
+    """Returns HTTP headers to be used in requests."""
+    return {
+        "Host": "judge.wizards.com",
+        "Origin": "https://judge.wizards.com",
+        "Referer": "https://judge.wizards.com/login.aspx?ReturnUrl=/home.aspx",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.36 Safari/537.36",
+        }
+
   def _get_reviews_on_page(self):
     """Yields displayed reviews, without navigating to other pages."""
     soup = BeautifulSoup(self.text)
@@ -330,12 +359,14 @@ class JudgeCenterSession(object):
   def _post_form(self, fields):
     """Posts completed form."""
     resp = self.session.post(REVIEW_URL,
+                             headers=self._get_headers(),
                              data=fields)
     self.text = resp.text.encode(resp.encoding)
 
   def _post_form_stateless(self, fields):
     """Posts completed form and returns HTML instead of modifying state."""
     resp = self.session.post(REVIEW_URL,
+                             headers=self._get_headers(),
                              data=fields)
     return resp.text.encode(resp.encoding)
 

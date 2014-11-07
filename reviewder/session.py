@@ -21,7 +21,7 @@ SESSION_COOKIE = "ASP.NET_SessionId"
 AUTH_COOKIE = "JudgeCenter.AspxAuth"
 
 # URLs
-JUDGE_CENTER_URL = "http://judge.wizards.com/"
+JUDGE_CENTER_URL = "https://judge.wizards.com/"
 LOGIN_URL = JUDGE_CENTER_URL + "login.aspx"
 REVIEW_URL = JUDGE_CENTER_URL + "reviews.aspx"
 

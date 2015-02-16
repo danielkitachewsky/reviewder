@@ -4,12 +4,10 @@ from collections import defaultdict
 import os
 import re
 
-from reviewder import review_types
-
 TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z0-9_]+)?%}")
 
 
-class RenderingError(review_types.Error):
+class RenderingError(Exception):
   """Generic error raised during rendering of templates."""
 
 

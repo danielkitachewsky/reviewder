@@ -205,7 +205,7 @@ class JudgeCenterSession(object):
     Args:
       - review_limit is the maximum number of reviews to extract (no limit if 0)
     Returns:
-      - a list of review_types.Review
+      - a list of types.Expandable
     """
     result = []
     if review_limit:

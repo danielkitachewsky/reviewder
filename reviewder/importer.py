@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from dateutil.parser import parse
 import sys
 
-from reviewder import review_types
+from common import types
 
 
 def parse_fields(html):
@@ -67,8 +67,8 @@ def parse_fields(html):
 
 
 def make_review(field_dict):
-  """Returns a review_types.Review filled from a parsed dictionary."""
-  return review_types.Review(
+  """Returns a types.Expandable filled from a parsed dictionary."""
+  return types.Expandable(
     id_=int(field_dict["ID"]),
     # Renewal reviews don't have a Reviewer
     observer=field_dict.get("Reviewer", field_dict["Entered By"]),

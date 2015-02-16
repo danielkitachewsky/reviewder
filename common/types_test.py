@@ -17,11 +17,14 @@ class SerializationTestCase(unittest.TestCase):
 
   def test_review_save_load(self):
     review_id = 1
+    subobj_id = 2
     review = types.Expandable(review_id,
                               observer=u"Daniel",
                               subject=u"Pepito",
                               strengths=u"Zéro.",
                               afi=u"Nada.",
+                              judges=["a", "b", "c"],
+                              subobj=types.Expandable(subobj_id, a=1, b="c"),
                               comments=u"гы-гы")
     types.save(review, self.dir_)
     self.assertEqual(review, types.load(self.dir_, review_id))
@@ -29,12 +32,14 @@ class SerializationTestCase(unittest.TestCase):
                   "subject",
                   "strengths",
                   "afi",
+                  "judges",
+                  "subobj",
                   "comments"]:
       old_value = review.__dict__[field]
       review.__dict__[field] = "lol"
       self.assertNotEqual(review, types.load(self.dir_, review_id))
       review.__dict__[field] = old_value
       self.assertEqual(review, types.load(self.dir_, review_id))
-      
+
 if __name__ == "__main__":
   unittest.main()

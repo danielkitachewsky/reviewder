@@ -4,11 +4,38 @@ import json
 import os
 
 
+class RecursiveExpandableJSONEncoder(json.JSONEncoder):
+  """Encoder for Expandable objects where fields can be Expandable."""
+  def default(self, obj):
+    if isinstance(obj, Expandable):
+      result = dict(obj.__dict__)
+      result['__type__'] = 'Expandable'
+      return result
+    else:
+      return super(RecursiveExpandableJSONEncoder, self).default(obj)
+
+ENCODER = RecursiveExpandableJSONEncoder()
+
+
+def _dict_to_object(d):
+  """Converts a json serialized dictionary to an Expandable, if applicable."""
+  if '__type__' not in d:
+    return d
+
+  if d['__type__'] != 'Expandable':
+    return d
+
+  del d['__type__']
+  return Expandable(**d)
+
+
 class Expandable(object):
   """Generic class that can hold arbitrary fields."""
   def __init__(self, id_, **kwargs):
     self.id_ = id_
     for key, value in kwargs.iteritems():
+      if key == "id_":
+        continue
       self.__dict__[key] = value
 
   def __eq__(self, other):
@@ -43,12 +70,12 @@ class Expandable(object):
 
   def _to_json(self):
     """Gives a JSON representation of a expandable."""
-    return json.dumps(self.__dict__)
+    return ENCODER.encode(self.__dict__)
 
   @classmethod
   def _from_json(cls, json_):
     """Returns an Expandable parsed from the json_."""
-    return Expandable(**json.loads(json_))
+    return Expandable(**json_)
 
 def save(expandable, dir_):
   """Saves an expandable to disk.
@@ -63,7 +90,7 @@ def save(expandable, dir_):
   if not os.path.isdir(dir_):
     return False
   with open(os.path.join(dir_, str(expandable.id_)), "wb") as f:
-    f.write(json.dumps(expandable._to_json()))
+    f.write(expandable._to_json())
     f.write('\n')  # For nice behavior from terminal
 
 
@@ -80,5 +107,5 @@ def load(dir_, id_):
   if not os.path.exists(filename):
     return None
   with open(filename, "rb") as f:
-    review_json = json.loads(f.read())
+    review_json = json.loads(f.read(), object_hook=_dict_to_object)
   return Expandable._from_json(review_json)

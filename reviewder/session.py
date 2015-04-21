@@ -8,6 +8,7 @@ import requests
 import re
 import sys
 
+from common import parse_util
 from reviewder import importer
 from reviewder import progress
 
@@ -420,23 +421,23 @@ def _get_me_filter(text):
 
 
 def _get_filter_dropdown(text):
-  return _get_tag_by_field(text, 'select', 'id', DROPDOWN_LIST)
+  return parse_util.get_tag_by_field(text, 'select', 'id', DROPDOWN_LIST)
 
 
 def _get_user_value_box(text):
-  return _get_tag_by_field(text, 'input', 'id', TEXT_BOX)
+  return parse_util.get_tag_by_field(text, 'input', 'id', TEXT_BOX)
 
 
 def _get_next_page_link(text):
-  return _get_tag_by_field(text, 'a', 'href', LINK_NEXT)
+  return parse_util.get_tag_by_field(text, 'a', 'href', LINK_NEXT)
 
 
 def _get_first_page_link(text):
-  return _get_tag_by_field(text, 'a', 'href', LINK_FIRST)
+  return parse_util.get_tag_by_field(text, 'a', 'href', LINK_FIRST)
 
 
 def _get_result_count(text):
-  div_count = _get_tag_by_field(text, 'div', 'class', "results")
+  div_count = parse_util.get_tag_by_field(text, 'div', 'class', "results")
   if not div_count:
     error("No results tag found.")
     return 0
@@ -447,15 +448,3 @@ def _get_result_count(text):
   if match:
     return int(match.group(1))
   return 0
-
-
-def _get_tag_by_field(text, tag_name, field, expr):
-  """Returns HTML tag in text if expr is in its field.
-
-  If not found, returns None.
-  """
-  soup = BeautifulSoup(text)
-  for tag in soup.find_all(tag_name):
-    if expr in tag.get(field, ''):
-      return tag
-  return None

@@ -56,7 +56,7 @@ class Expandable(object):
     return result
 
   def __repr__(self):
-    field_reprs = ["%s=%s" % (key, repr(value))
+    field_reprs = ["%s=%r" % (key, value)
                    for (key, value)
                    in self.__dict__.iteritems()]
     if field_reprs:

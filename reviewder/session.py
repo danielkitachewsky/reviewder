@@ -9,8 +9,8 @@ import re
 import sys
 
 from common import parse_util
+from common import progress
 from reviewder import importer
-from reviewder import progress
 
 
 # Credentials

@@ -5,7 +5,7 @@ import os
 import random
 import unittest
 
-from reviewder import format
+from common import format
 
 
 class FormatTestCase(unittest.TestCase):

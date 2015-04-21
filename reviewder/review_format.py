@@ -3,7 +3,7 @@ import base64
 import os
 import time
 
-from reviewder import format
+from common import format
 
 
 COLOR_YELLOW = "#ffff88"

@@ -4,7 +4,7 @@ from collections import defaultdict
 import os
 import re
 
-TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z0-9_]+)?%}")
+TOKEN_RE = re.compile("{%([a-zA-Z_][a-zA-Z0-9_]*)(\.[a-zA-Z0-9_\.]+)?%}")
 
 
 class RenderingError(Exception):
@@ -13,25 +13,25 @@ class RenderingError(Exception):
 
 class Token(object):
   """A token-replacement spec"""
-  def __init__(self, text, member):
+  def __init__(self, text, members):
     self.text = text
-    self.member = member
+    self.members = members
     # suppress initial dot coming from parsing
-    if self.member and self.member[:1] == ".":
-      self.member = self.member[1:]
+    if self.members and self.members[:1] == ".":
+      self.members = self.members[1:]
 
   @property
   def label(self):
     """Returns the string that represents this token."""
-    if not self.member:
+    if not self.members:
       return self.text
-    return "%s.%s" % (self.text, self.member)
+    return "%s.%s" % (self.text, self.members)
 
   def __eq__(self, other):
-    return self.text == other.text and self.member == other.member
+    return self.text == other.text and self.members == other.members
 
   def __hash__(self):
-    return hash(self.text) + hash(self.member)
+    return hash(self.text) + hash(self.members)
 
 
 def collect_tokens(text):
@@ -80,8 +80,11 @@ def render_text(text, **kwargs):
   tokens_to_replace = collect_tokens(text)
   for token_set in tokens_to_replace.itervalues():
     for token in token_set:
-      if token.member:
-        value = _get_member(kwargs.get(token.text, {}), token.member)
+      if token.members:
+        member_chain = token.members.split(".")
+        value = kwargs.get(token.text, {})
+        for member in member_chain:
+          value = _get_member(value, member)
       else:
         value = kwargs.get(token.text, u"")
       text = text.replace(u"{%%%s%%}" % token.label, unicode(value))

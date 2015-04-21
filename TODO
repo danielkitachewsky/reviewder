@@ -9,3 +9,4 @@
 - bug in progress bar when the text doesn't fit in the terminal's width (doesn't erase everything)
 - test with reviews by Emeritus
 - bug in Makino (92705479) reviews: Recommendation appears in legend but not in text
+- rework language around TL rec to TL check

@@ -47,17 +47,22 @@ class FormatTestCase(unittest.TestCase):
     class InInit(object):
       def __init__(self):
         self.abc = u"foo"
+        self.defg = InClass()
     dict_like = {u"abc": u"foo"}
     text = u"{%a.abc%}"
     for var in [InClass(), InInit(), dict_like]:
       self.assertEqual(u"foo", format._get_member(var, u"abc"))
       self.assertEqual(u"foo", format.render_text(text, a=var))
     self.assertEqual(u"", format.render_text(text, a=1))
-    text = u"{%a.abc%}{%a.def%}"
-    dict_like = {u"abc": u"foo", u"def": u"bar"}
+    text = u"{%a.abc%}{%a.defg%}"
+    dict_like = {u"abc": u"foo", u"defg": u"bar"}
     self.assertEqual(u"foobar", format.render_text(text, a=dict_like))
-    dict_like = {u"abc": u"гы-гы", u"def": 1}
+    dict_like = {u"abc": u"гы-гы", u"defg": 1}
     self.assertEqual(u"гы-гы1", format.render_text(text, a=dict_like))
+    text = u"{%a.defg.abc%}"
+    nested = {u"defg": {u"abc": u"foo"}}
+    self.assertEqual(u"foo", format.render_text(text, a=nested))
+    self.assertEqual(u"foo", format.render_text(text, a=InInit()))
 
 
 class FormatFileTestCase(unittest.TestCase):

@@ -7,6 +7,17 @@ import sys
 from common import types
 
 
+def paragraph_tag_contents(tag):
+  """Returns the contents of a BeautifulSoup tag known to contain long text.
+  """
+  attrs = tag.attrs
+  tag.attrs = {}
+  tag_length = len(tag.name)
+  result = tag.prettify()[tag_length+4:-tag_length-5]
+  tag.attrs = attrs
+  return result
+
+
 def parse_summary_fields(soup):
   """Parses the summary of a Judge Center object.
 
@@ -27,9 +38,7 @@ def parse_summary_fields(soup):
     contents_soup = b_tag.parent
     b_tag.extract()
     if name in ("Strengths", "Areas for Improvement", "Comments"):
-      contents_soup.attrs = {}
-      tag_length = len(contents_soup.name)
-      contents = contents_soup.prettify()[tag_length+4:-tag_length-5]
+      contents = paragraph_tag_contents(contents_soup)
     elif name in (
         # For reviews
         "Entered",

@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-from reviewder import session
+from reviewder import review_session
 from reviewder import review_format
 
 
@@ -15,26 +15,26 @@ class ReviewderError(Exception):
 
 def get_review_bundle(dci_number, limit=0):
   """Get all reviews by and on single person."""
-  reviews = (session.JudgeCenterSession()
+  reviews = (review_session.JudgeCenterReviewsSession()
              .add_filter_or("SubjectDCINumber", str(dci_number))
              .add_filter("ReviewerDCINumber", str(dci_number))
-             .get_reviews(limit))
+             .get(limit))
   return reviews
 
 
 def get_on_review_bundle(dci_number, limit=0):
   """Get all reviews on a single person."""
-  reviews = (session.JudgeCenterSession()
+  reviews = (review_session.JudgeCenterReviewsSession()
              .add_filter("SubjectDCINumber", str(dci_number))
-             .get_reviews(limit))
+             .get(limit))
   return reviews
 
 
 def get_by_review_bundle(dci_number, limit=0):
   """Get all reviews by a single person."""
-  reviews = (session.JudgeCenterSession()
+  reviews = (review_session.JudgeCenterReviewsSession()
              .add_filter("ReviewerDCINumber", str(dci_number))
-             .get_reviews(limit))
+             .get(limit))
   return reviews
 
 
@@ -65,11 +65,11 @@ def prompt_review_bundle(limit=0, mode="all"):
 
 def get_recos():
   """Get recommendation reviews."""
-  reviews = (session.JudgeCenterSession()
+  reviews = (review_session.JudgeCenterReviewsSession()
              .add_filter("SubjectLevelCd", "2")
              .add_filter_or("Comments", "recommend")
              .add_filter("Strengths", "recommend")
-             .get_reviews())
+             .get())
   return reviews
 
 
@@ -80,10 +80,6 @@ def save_to_file(reviews, name):
                                          title=u"Reviews"))
   print "Reviews saved in %s" % filename
 
-
-def review_from_file(filename):
-  from reviewder import importer
-  return importer.parse_html_review(open(filename))
 
 def main():
   print "Reviewder, the review downloader!"

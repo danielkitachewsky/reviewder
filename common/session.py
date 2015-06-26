@@ -10,7 +10,6 @@ import sys
 
 from common import parse_util
 from common import progress
-from reviewder import importer
 
 
 # Credentials
@@ -24,12 +23,8 @@ AUTH_COOKIE = "JudgeCenter.AspxAuth"
 # URLs
 JUDGE_CENTER_URL = "https://judge.wizards.com/"
 LOGIN_URL = JUDGE_CENTER_URL + "login.aspx"
-REVIEW_URL = JUDGE_CENTER_URL + "reviews.aspx"
 
 # Constants for navigating around the Judge Center
-ONLY_ME_FILTER_TEXT = "Entered By DCI Number is equal to {0}," \
-    " or Reviewer DCI Number is equal to {0}," \
-    " or Subject DCI Number is equal to {0}"
 BTN_FINISH = "btnFinish"
 BTN_OR = "btnOr"
 DROPDOWN_LIST = "columnDropDownList"
@@ -44,45 +39,6 @@ POSTBACK_RE = re.compile("javascript:__doPostBack\('([^']*)','([^']*)'\)")
 TIMEOUT_POSTBACK_RE = re.compile(
   "javascript:setTimeout\("
   "'__doPostBack\(\\\\'([^']*)\\\\',\\\\'([^']*)\\\\'\)'")
-
-# Review filter values
-REVIEW_FILTERS = {
-    "ReviewID": "ID",
-    "EnteredByDisplayName": "Entered By",
-    "EnteredByFirstName": "Entered By First Name",
-    "EnteredByLastName": "Entered By Last Name",
-    "EnteredByDCINumber": "Entered By DCI Number",
-    "EnteredDate": "Entered",
-    "ReviewDate": "Observed",
-    "LanguageName": "Language",
-    "ReviewerDisplayName": "Reviewer",
-    "ReviewerFirstName": "Reviewer First Name",
-    "ReviewerLastName": "Reviewer Last Name",
-    "ReviewerDCINumber": "Reviewer DCI Number",
-    "ReviewerLevelCd": "Reviewer Level",
-    "ReviewerTournamentRoleName": "Reviewer Role",
-    "ReviewerLanguageName": "Reviewer Language",
-    "ReviewTypeName": "Type",
-    "ReviewStatusName": "Status",
-    "ReviewRatingName": "Comparison",
-    "RecommendAdvancement": "Advancement",
-    "EventTypeName": "Event Type",
-    "EventLocation": "City",
-    "CountryName": "Country",
-    "ExamID": "Exam ID",
-    "ExamScore": "Exam Score",
-    "SubjectPersonID": "Subject Person ID",
-    "SubjectDisplayName": "Subject",
-    "SubjectFirstName": "Subject First Name",
-    "SubjectLastName": "Subject Last Name",
-    "SubjectDCINumber": "Subject DCI Number",
-    "SubjectLevelCd": "Existing Level",
-    "SubjectTournamentRoleName": "Subject Role",
-    "NewLevelCd": "New Level",
-    "Strengths": "Strengths",
-    "Weaknesses": "Areas for Improvement",
-    "Comments": "Comments",
-    }
 
 
 def error(*args):
@@ -124,13 +80,16 @@ class JudgeCenterSession(object):
   Resetting filters is more easily done by starting a new session altogether.
   """
   def __init__(self):
-    # TODO make text a getter/setter and update soup each time
-    self.text = ""  # The current HTML content of the select reviews page.
+    self.text = ""  # The current HTML content of the select page.
     self.session = None
     self.page = 1
     self._make_session()
-    self._navigate_select_reviews()
-    self._remove_only_me_filter()
+    self._post_make_session_hook()
+    # TODO make a hook to navigate to appropriate page.
+
+  def _get_base_url(self):
+    """Gives the base page's URL for this type of session."""
+    raise NotImplementedError
 
   def _make_session(self):
     """Initiates a new session with the Judge Center.
@@ -146,38 +105,16 @@ class JudgeCenterSession(object):
                       params={"ReturnUrl": "/home.aspx"},
                       data=fields)
 
-  def _navigate_select_reviews(self):
-    """Navigates to the select reviews screen."""
-    review_home_req = self.session.get(REVIEW_URL)
-    fields = _get_fields(review_home_req.text)
-    _add_review_home_select(fields)
-    self._post_form(fields)
-
-  def _remove_only_me_filter(self):
-    """Removes the review filter that restricts to viewing only own reviews.
-
-    Args:
-      - text should be an HTML representation of the Select Reviews page.
-    """
-    filter_tag = _get_me_filter(self.text)
-    if filter_tag is None:
-      error("No filter tag")
-      # The filter wasn't present, nothing to do
-      return
-    filter_button = filter_tag.previous_sibling.find('a')
-    if not filter_button:
-      error("No button")
-      return
-    fields = _extract_postback_args(self.text, filter_button['href'])
-    self._post_form(fields)
+  def _post_make_session_hook(self):
+    """Override to have behavior just after the session is created."""
+    pass
 
   def add_filter(self, filter_name, value):
-    """Adds a filter to the reviews select page and submits with "Finish".
+    """Adds a filter to the select page and submits with "Finish".
 
     Can be used to finish a partial filter.
     Args:
-      - filter_name is the backend name of the filter, which can be found in
-      the keys of REVIEW_FILTERS.
+      - filter_name is the backend name of the filter.
       - value is the string value as typed in the text field.
     """
     self._add_filter_name(filter_name)
@@ -185,67 +122,80 @@ class JudgeCenterSession(object):
     return self
 
   def add_filter_or(self, filter_name, value):
-    """Adds a filter to the reviews select page and submits with "Or...".
+    """Adds a filter to the select page and submits with "Or...".
 
     The filter should then be finished with optional other calls to
     add_filter_or() and one call to add_filter().
     Args:
-      - filter_name is the backend name of the filter, which can be found in
-      the keys of REVIEW_FILTERS.
+      - filter_name is the backend name of the filter.
       - value is the string value as typed in the text field.
     """
     self._add_filter_name(filter_name)
     self._input_value_or(value)
     return self
 
-  def get_reviews(self, review_limit=0):
-    """Returns reviews corresponding to the current filters.
+  def get(self, item_limit=0):
+    """Returns items corresponding to the current filters.
 
-    Navigates to next page as needed. Returns to page 1 after all reviews
+    Navigates to next page as needed. Returns to page 1 after all items
     have been consumed.
     Args:
-      - review_limit is the maximum number of reviews to extract (no limit if 0)
+      - item_limit is the maximum number of items to extract (no limit if 0)
     Returns:
       - a list of types.Expandable
     """
     result = []
-    if review_limit:
-      review_total = min(review_limit, _get_result_count(self.text))
+    if item_limit:
+      item_total = min(item_limit, _get_result_count(self.text))
     else:
-      review_total = _get_result_count(self.text)
+      item_total = _get_result_count(self.text)
     messages = progress.Messages()
-    for i, html_review in enumerate(self._get_html_reviews()):
-      review = importer.parse_html_review(html_review)
-      messages.log(u"(%s/%s) Downloading review of %s on %s..." %
-                   (i + 1, review_total, review.observer,
-                    review.subject))
-      result.append(review)
-      if review_limit and i + 1 >= review_limit:
+    for i, html_item in enumerate(self._get_html_items()):
+      item = self._item_parser()(html_item)
+      messages.log(u"(%s/%s) %s" %
+                   (i + 1, item_total, self._item_repr(item)))
+      result.append(item)
+      if item_limit and i + 1 >= item_limit:
         self._navigate_to_page_1()
         break
-    messages.log("Downloaded %s reviews." % review_total)
+    messages.log(self._end_message() % item_total)
     messages.finish()
     return result
 
-  def _get_html_reviews(self):
-    """Yields reviews corresponding to the current filters.
+  def _item_parser(self):
+    """Returns a function that can parse an html_item into an item."""
+    raise NotImplementedError
 
-    Navigates to next page as needed. Returns to page 1 after all reviews
+  def _item_repr(self, item):
+    """Returns a human-readable message for progress on downloading item."""
+    raise NotImplementedError
+
+  def _end_message(self):
+    """Returns a human-readable message for successful end of downloading.
+
+    Should include a single placeholder for the number of items.
+    """
+    raise NotImplementedError
+
+  def _get_html_items(self):
+    """Yields items corresponding to the current filters.
+
+    Navigates to next page as needed. Returns to page 1 after all items
     have been consumed.
     Yields:
-      - HTML representation of a review
+      - HTML representation of an item.
     """
     self.page = 1
     error("%s results" % _get_result_count(self.text))
-    for review in self._get_reviews_on_page():
-      yield review
+    for item in self._get_items_on_page():
+      yield item
     next_page_link = _get_next_page_link(self.text)
     while next_page_link:
       fields = _extract_postback_args(self.text, next_page_link['href'])
       self._post_form(fields)
       self.page += 1
-      for review in self._get_reviews_on_page():
-        yield review
+      for item in self._get_items_on_page():
+        yield item
       next_page_link = _get_next_page_link(self.text)
     self._navigate_to_page_1()
 
@@ -260,8 +210,35 @@ class JudgeCenterSession(object):
       self.page = 1
       self._post_form(fields)
 
-  def _get_reviews_on_page(self):
-    """Yields displayed reviews, without navigating to other pages."""
+  def _remove_filter(self, filter_text):
+    """Removes the filter given its text.
+
+    Does nothing if filter wasn't active.
+    """
+    filter_tag = self._get_filter(filter_text)
+    if filter_tag is None:
+      error("No filter tag")
+      # The filter wasn't present, nothing to do
+      return
+    filter_button = filter_tag.previous_sibling.find('a')
+    if not filter_button:
+      error("No button")
+      return
+    fields = _extract_postback_args(self.text, filter_button['href'])
+    self._post_form(fields)
+
+  def _get_filter(self, filter_text):
+    """Returns filter element by the text displayed next to the filter."""
+    soup = BeautifulSoup(self.text)
+    for td_tag in soup.find_all('td'):
+      if td_tag.string is None:
+        continue
+      if td_tag.string.strip() == filter_text:
+        return td_tag
+    return None
+
+  def _get_items_on_page(self):
+    """Yields displayed items, without navigating to other pages."""
     soup = BeautifulSoup(self.text)
     for tr_tag in soup.find_all('tr'):
       if tr_tag.get('onclick') is None:
@@ -270,15 +247,14 @@ class JudgeCenterSession(object):
       yield self._post_form_stateless(fields)
 
   def _add_filter_name(self, filter_name):
-    """Adds a filter to the reviews select page.
+    """Adds a filter to the select page.
 
     The returned page is ready to receive a value for the filter and be
     submitted with "Finish" or "Or..." to continue the filter.
     It is safe to call this no matter the current value in the filter
     dropdown. It is also safe to use it for a continuation filter.
     Args:
-      - filter_name is the backend name of the filter, which can be found in
-      the keys of REVIEW_FILTERS.
+      - filter_name is the backend name of the filter.
     """
     fields = _get_fields(self.text)
     filter_dropdown = _get_filter_dropdown(self.text)
@@ -292,7 +268,7 @@ class JudgeCenterSession(object):
   def _input_value(self, value):
     """Inputs the given value into the appropriate text box.
 
-    The select reviews page should curently have a filter selected.
+    The select page should curently have a filter selected.
     Submits the form with "Finish".
     Args:
       - value is a textual value.
@@ -302,7 +278,7 @@ class JudgeCenterSession(object):
   def _input_value_or(self, value):
     """Inputs the given value into the appropriate text box.
 
-    The select reviews page should curently have a filter selected.
+    The select page should curently have a filter selected.
     Submits the form with "Or...". The response should then receive a new filter
     with add_filter().
     Args:
@@ -313,7 +289,7 @@ class JudgeCenterSession(object):
   def _input_value_with_btn(self, value, btn_name):
     """Inputs the given value into the appropriate text box.
 
-    The select reviews page should curently have a filter selected.
+    The select page should curently have a filter selected.
     Submits the form.
     Args:
       - value is a textual value.
@@ -330,15 +306,23 @@ class JudgeCenterSession(object):
 
   def _post_form(self, fields):
     """Posts completed form."""
-    resp = self.session.post(REVIEW_URL,
-                             data=fields)
+    resp = self.session.post(self._get_base_url(), data=fields)
     self.text = resp.text.encode(resp.encoding)
 
   def _post_form_stateless(self, fields):
     """Posts completed form and returns HTML instead of modifying state."""
-    resp = self.session.post(REVIEW_URL,
-                             data=fields)
+    resp = self.session.post(self._get_base_url(), data=fields)
     return resp.text.encode(resp.encoding)
+
+  def select_tab(self, fields, tab_number):
+    """Simulate a click on one of the tabs (view, select, etc.).
+
+    tab_number is 1-base.
+    """
+    fields["___dpmt__mt_ts_State__"] = tab_number
+    _add_postback_args(fields, "_dpmt$_mt$ts", "%d" % tab_number)
+    self._post_form(fields)
+
 
 def _get_fields(text, multi_submit_name=""):
   """Extract fields from HTML text.
@@ -385,12 +369,6 @@ def _add_login_info(field_dico):
   field_dico['TimeZoneOffset'] = '-60'
 
 
-def _add_review_home_select(fields):
-  """Fill in form fields to simulate a click on Select."""
-  fields["___dpmt__mt_ts_State__"] = 3
-  _add_postback_args(fields, "_dpmt$_mt$ts", "3")
-
-
 def _extract_postback_args(text, script):
   """Return form fields corresponding to execution of given javascript."""
   javascript = TIMEOUT_POSTBACK_RE.search(script)
@@ -408,16 +386,6 @@ def _add_postback_args(fields, target, arg):
   """Fill the form fields with arguments from __doPostBack."""
   fields["__EVENTTARGET"] = target
   fields["__EVENTARGUMENT"] = arg
-
-
-def _get_me_filter(text):
-  soup = BeautifulSoup(text)
-  for td_tag in soup.find_all('td'):
-    if td_tag.string is None:
-      continue
-    if td_tag.string.strip() == ONLY_ME_FILTER_TEXT.format(get_username()):
-      return td_tag
-  return None
 
 
 def _get_filter_dropdown(text):

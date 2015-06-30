@@ -1,6 +1,7 @@
 
 import base64
 import os
+import re
 import time
 
 from common import format
@@ -36,12 +37,15 @@ def _subject_level(review):
     return review.existing_level
 
 
+TL_RE = re.compile(r"\btl\b|\bteam lead")
+
+
 def _is_recommendation(review):
   """Guess if the review is a recommendation.
 
   Valid recommendations are:
   - L3 recommendation
-  - GP TL recommendation by a L4+
+  - GP TL check by a L4+
   """
   if review.reviewer_level not in "345":
     return False
@@ -50,18 +54,25 @@ def _is_recommendation(review):
           review.city.lower())
   rec_pos = text.find("recommend")
   while rec_pos >= 0:
-    text_around = text[max(0, rec_pos - 45): min(rec_pos + 60, len(text) - 1)]
+    text_around = text[max(0, rec_pos - 45):rec_pos + 60]
     if "level 3" in text_around \
           or "l3" in text_around \
           or "lv3" in text_around \
           or "level three" in text_around \
           or "written" in text_around:
       return True
-    if ("tl" in text_around \
-          or "team leader" in text_around) \
-        and review.reviewer_level in "45":
+    if (TL_RE.search(text_around)
+        and review.reviewer_level in "45"):
       return True
     rec_pos = text.find("recommend", rec_pos + 1)
+  if review.reviewer_level in "45":
+    tl_search = TL_RE.search(text)
+    while tl_search:
+      text_around = text[max(0, tl_search.start() - 15):tl_search.end() + 25]
+      if "check" in text_around \
+            or "capability" in text_around:
+        return True
+      tl_search = TL_RE.search(text, tl_search.end() + 1)
   return False
 
 

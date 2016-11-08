@@ -63,13 +63,18 @@ def prompt_review_bundle(limit=0, mode="all"):
   save_to_file(reviews, name)
 
 
-def get_recos():
+def get_recos(limit=0):
   """Get recommendation reviews."""
   reviews = (review_session.JudgeCenterReviewsSession()
              .add_filter("SubjectLevelCd", "2")
              .add_filter_or("Comments", "recommend")
              .add_filter("Strengths", "recommend")
-             .get())
+             .add_filter("EnteredDate", "2013/12/31",
+                         review_session.JudgeCenterReviewsSession.GREATER_THAN)
+             .add_filter("ReviewerLevelCd", "2",
+                         review_session.JudgeCenterReviewsSession.GREATER_THAN)
+             .get(limit))
+  return reviews
 
 
 def get_panel_reviews(limit=0):
@@ -94,7 +99,11 @@ def save_to_file(reviews, name):
 def main():
   print "Reviewder, the review downloader!"
   if len(sys.argv) > 1 and sys.argv[1] == "reco":
-    reviews = get_recos()
+    try:
+      limit = int(sys.argv[2])
+    except ValueError:
+      limit = 0
+    reviews = get_recos(limit)
     save_to_file(reviews, "recos.html")
   elif len(sys.argv) > 1 and sys.argv[1] == "panel":
     try:

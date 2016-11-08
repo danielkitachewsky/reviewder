@@ -30,6 +30,7 @@ BTN_OR = "btnOr"
 DROPDOWN_LIST = "columnDropDownList"
 LINK_FIRST = "ucDataGridPagerLinksBottom.lkbFirst"
 LINK_NEXT = "ucDataGridPagerLinksBottom.lkbNext"
+RELATION_DROPDOWN = "relationTypeDropDownList"
 TEXT_BOX = "userValueTextBox"
 MANY_RESULTS_RE = re.compile("Results ([0-9]+)-([0-9]+) of ([0-9]+).")
 FEW_RESULTS_RE = re.compile("([0-9]+) results?.")
@@ -79,6 +80,12 @@ class JudgeCenterSession(object):
   shouldn't require any unintuitive order and should be kept that way.
   Resetting filters is more easily done by starting a new session altogether.
   """
+
+  # Constants for form input. Need to be exposed in subclasses.
+  EQUALS = "Equals"
+  LESS_THAN = "LessThan"
+  GREATER_THAN = "GreaterThan"
+
   def __init__(self):
     self.text = ""  # The current HTML content of the select page.
     self.session = None
@@ -109,19 +116,23 @@ class JudgeCenterSession(object):
     """Override to have behavior just after the session is created."""
     pass
 
-  def add_filter(self, filter_name, value):
+  def add_filter(self, filter_name, value, relation=None):
     """Adds a filter to the select page and submits with "Finish".
 
     Can be used to finish a partial filter.
     Args:
       - filter_name is the backend name of the filter.
       - value is the string value as typed in the text field.
+      - relation is the relation to the value. One of EQUALS, LESS_THAN,
+        GREATER_THAN.
     """
+    if relation is None:
+      relation = self.EQUALS
     self._add_filter_name(filter_name)
-    self._input_value(value)
+    self._input_value(value, relation)
     return self
 
-  def add_filter_or(self, filter_name, value):
+  def add_filter_or(self, filter_name, value, relation=None):
     """Adds a filter to the select page and submits with "Or...".
 
     The filter should then be finished with optional other calls to
@@ -129,9 +140,13 @@ class JudgeCenterSession(object):
     Args:
       - filter_name is the backend name of the filter.
       - value is the string value as typed in the text field.
+      - relation is the relation to the value. One of EQUALS, LESS_THAN,
+        GREATER_THAN.
     """
+    if relation is None:
+      relation = self.EQUALS
     self._add_filter_name(filter_name)
-    self._input_value_or(value)
+    self._input_value_or(value, relation)
     return self
 
   def get(self, item_limit=0):
@@ -265,17 +280,19 @@ class JudgeCenterSession(object):
     fields[filter_dropdown['name']] = filter_name
     self._post_form(fields)
 
-  def _input_value(self, value):
+  def _input_value(self, value, relation):
     """Inputs the given value into the appropriate text box.
 
     The select page should curently have a filter selected.
     Submits the form with "Finish".
     Args:
       - value is a textual value.
+      - relation is the relation to the value. One of EQUALS, LESS_THAN,
+        GREATER_THAN.
     """
-    self._input_value_with_btn(value, BTN_FINISH)
+    self._input_value_with_btn(value, relation, BTN_FINISH)
 
-  def _input_value_or(self, value):
+  def _input_value_or(self, value, relation):
     """Inputs the given value into the appropriate text box.
 
     The select page should curently have a filter selected.
@@ -283,16 +300,20 @@ class JudgeCenterSession(object):
     with add_filter().
     Args:
       - value is a textual value.
+      - relation is the relation to the value. One of EQUALS, LESS_THAN,
+        GREATER_THAN.
     """
-    self._input_value_with_btn(value, BTN_OR)
+    self._input_value_with_btn(value, relation, BTN_OR)
 
-  def _input_value_with_btn(self, value, btn_name):
+  def _input_value_with_btn(self, value, relation, btn_name):
     """Inputs the given value into the appropriate text box.
 
     The select page should curently have a filter selected.
     Submits the form.
     Args:
       - value is a textual value.
+      - relation is the relation to the value. One of EQUALS, LESS_THAN,
+        GREATER_THAN.
       - btn_name is the name of the button to submit with.
     """
     self.page = 1
@@ -302,6 +323,11 @@ class JudgeCenterSession(object):
       return
     fields = _get_fields(self.text, btn_name)
     fields[value_box['name']] = value
+    if relation != self.EQUALS:
+      relation_box = _get_user_relation_box(self.text)
+      if relation_box is None:
+        error("No relation box but relation different from EQUALS requested.")
+      fields[relation_box['name']] = relation
     self._post_form(fields)
 
   def _post_form(self, fields):
@@ -395,6 +421,9 @@ def _get_filter_dropdown(text):
 def _get_user_value_box(text):
   return parse_util.get_tag_by_field(text, 'input', 'id', TEXT_BOX)
 
+
+def _get_user_relation_box(text):
+  return parse_util.get_tag_by_field(text, 'select', 'id', RELATION_DROPDOWN)
 
 def _get_next_page_link(text):
   return parse_util.get_tag_by_field(text, 'a', 'href', LINK_NEXT)

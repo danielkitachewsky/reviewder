@@ -70,6 +70,16 @@ def get_recos():
              .add_filter_or("Comments", "recommend")
              .add_filter("Strengths", "recommend")
              .get())
+
+
+def get_panel_reviews(limit=0):
+  """Get reviews on panels."""
+  reviews = (review_session.JudgeCenterReviewsSession()
+             .add_filter_or("SubjectLevelCd", "2")
+             .add_filter("SubjectLevelCd", "3")
+             .add_filter_or("NewLevelCd", "2")
+             .add_filter("NewLevelCd", "3")
+             .get(limit))
   return reviews
 
 
@@ -86,6 +96,13 @@ def main():
   if len(sys.argv) > 1 and sys.argv[1] == "reco":
     reviews = get_recos()
     save_to_file(reviews, "recos.html")
+  elif len(sys.argv) > 1 and sys.argv[1] == "panel":
+    try:
+      limit = int(sys.argv[2])
+    except ValueError:
+      limit = 0
+    reviews = get_panel_reviews(limit)
+    save_to_file(reviews, "panel.html")
   elif len(sys.argv) > 1:
     try:
       limit = int(sys.argv[1])

@@ -84,8 +84,10 @@ class ReviewDatabase(object):
     cursor.execute(make_table_creation_command("reviews", FIELD_DESCRIPTIONS))
     self._connection.commit()
 
-  def save_review(self, review):
+  def save_review(self, review, override=True):
     cursor = self._connection.cursor()
+    if override:
+      cursor.execute("DELETE FROM reviews WHERE id_ = ?", (review.id_,))
     cursor.execute(make_insertion_command("reviews", FIELD_DESCRIPTIONS),
                    tuple_from_expandable(review, FIELD_DESCRIPTIONS))
     self._connection.commit()
@@ -99,3 +101,11 @@ class ReviewDatabase(object):
     for row in cursor:
       return expandable_from_tuple(row, FIELD_DESCRIPTIONS)    
     return None
+
+  def reviews_between(self, from_, to):
+    """Returns all reviews with id in [from_, to["""
+    cursor = self._connection.cursor()
+    select_command = make_select_command("reviews")
+    select_command += " WHERE id_ >= ? AND id_ < ?"
+    cursor.execute(select_command, (from_, to))
+    return [expandable_from_tuple(row, FIELD_DESCRIPTIONS) for row in cursor]

@@ -5,6 +5,7 @@ import os
 import re
 import sys
 
+from reviewder import db
 from reviewder import review_session
 from reviewder import review_format
 
@@ -88,6 +89,11 @@ def get_panel_reviews(limit=0):
   return reviews
 
 
+def read_reviews(from_, to):
+  database = db.ReviewDatabase("reviews.db")
+  return database.reviews_between(from_, to)
+
+
 def save_to_file(reviews, name):
   filename = os.path.join(os.path.expanduser("~/Documents"), name)
   with open(filename, "wb") as f:
@@ -112,6 +118,17 @@ def main():
       limit = 0
     reviews = get_panel_reviews(limit)
     save_to_file(reviews, "panel.html")
+  elif len(sys.argv) > 1 and sys.argv[1] == "read":
+    try:
+      from_ = int(sys.argv[2])
+    except (ValueError, IndexError):
+      from_ = 0
+    try:
+      to = int(sys.argv[3])
+    except (ValueError, IndexError):
+      to = 1000000
+    reviews = read_reviews(from_, to)
+    save_to_file(reviews[::-1], "db.html")
   elif len(sys.argv) > 1:
     try:
       limit = int(sys.argv[1])

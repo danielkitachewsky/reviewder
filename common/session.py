@@ -32,6 +32,7 @@ LINK_FIRST = "ucDataGridPagerLinksBottom.lkbFirst"
 LINK_NEXT = "ucDataGridPagerLinksBottom.lkbNext"
 RELATION_DROPDOWN = "relationTypeDropDownList"
 TEXT_BOX = "userValueTextBox"
+USER_DROPDOWN = "userValueDropDownList"
 MANY_RESULTS_RE = re.compile("Results ([0-9]+)-([0-9]+) of ([0-9]+).")
 FEW_RESULTS_RE = re.compile("([0-9]+) results?.")
 
@@ -319,8 +320,10 @@ class JudgeCenterSession(object):
     self.page = 1
     value_box = _get_user_value_box(self.text)
     if value_box is None:
-      error("No value box")
-      return
+      value_box = _get_user_value_dropdown(self.text)
+      if value_box is None:
+        error("No value box")
+        return
     fields = _get_fields(self.text, btn_name)
     fields[value_box['name']] = value
     if relation != self.EQUALS:
@@ -422,8 +425,13 @@ def _get_user_value_box(text):
   return parse_util.get_tag_by_field(text, 'input', 'id', TEXT_BOX)
 
 
+def _get_user_value_dropdown(text):
+  return parse_util.get_tag_by_field(text, 'select', 'id', USER_DROPDOWN)
+
+
 def _get_user_relation_box(text):
   return parse_util.get_tag_by_field(text, 'select', 'id', RELATION_DROPDOWN)
+
 
 def _get_next_page_link(text):
   return parse_util.get_tag_by_field(text, 'a', 'href', LINK_NEXT)
